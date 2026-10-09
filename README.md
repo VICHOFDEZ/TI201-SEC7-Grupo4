@@ -2,8 +2,8 @@
 - **Integrantes:**
   - Gaspar Rosales - Rol 1
   - Vicente Fernandez - Rol 2
-  - Nombre 3 - Rol 3
-  - Nombre 4 - Rol 4
+  - Renato Díaz - Rol 3
+  - Mateo Soliz - Rol 4
   
 - **ODS Seleccionado:** [Número y nombre]
 - **Problema a resolver:** [Descripción breve]
