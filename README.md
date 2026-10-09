@@ -1,7 +1,7 @@
 ### Información del Equipo
 - **Integrantes:**
-  - Nombre 1 - Rol 1
-  - Nombre 2 - Rol 2
+  - Gaspar Rosales - Rol 1
+  - Vicente Fernandez - Rol 2
   - Nombre 3 - Rol 3
   - Nombre 4 - Rol 4
   
