@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================
+   ESTACIONAMIENTO UAI - WEB 4: MONITOR MULTI-SENSOR (ESCALABLE)
+  ====================================================================
+   Igual que la web 3 (07_web_presentacion), pero para VARIOS espacios.
+
+   CÓMO FUNCIONA:
+   La página escucha la base de datos y crea sola una tarjeta por cada
+   sensor que encuentre con nombre "sensor_1", "sensor_2", "sensor_3"...
+     - Si solo hay 1 sensor conectado  -> se ve 1 tarjeta grande.
+     - Si hay 2, 3, 4...               -> se ven todas, ordenadas.
+     - Si se agrega un sensor nuevo    -> aparece sola, sin tocar nada.
+
+   Arriba muestra un RESUMEN GENERAL ("2 de 3 espacios libres"), y
+   cada tarjeta tiene su propio aviso de "sin señal".
+
+   PARA AGREGAR UN SENSOR:
+   En el código de la placa (03_sensor_avanzado) cambiar solo esta línea:
+        #define RUTA_SENSOR "/sensor_2"
+   Atajo: tecla F = pantalla completa.
+  ====================================================================
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estacionamiento UAI · Monitor multi-sensor</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🅿️</text></svg>">
+
+<!-- Librerías de Firebase (necesarias para leer la base de datos) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+/* ===================================================================
+   1. COLORES Y VARIABLES
+   Cada tarjeta tiene su propio color (--c) según su estado:
+   verde = libre, rojo = ocupado, gris = esperando datos.
+   =================================================================== */
+:root{
+  --bg:#070b16;
+  --card:rgba(255,255,255,.045);
+  --line:rgba(255,255,255,.09);
+  --txt:#e8edf7;
+  --muted:#8b97b1;
+  --accent:#38bdf8;
+  --libre:#22c55e;
+  --ocupado:#ef4444;
+  --espera:#64748b;
+  --alerta:#f59e0b;
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+
+/* ===================================================================
+   2. BASE DE LA PÁGINA
+   =================================================================== */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+.wrap{position:relative;z-index:1;max-width:1360px;margin:0 auto;padding:22px 24px 26px}
+
+/* Resplandor de fondo según el resumen general */
+.glow{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .9s;z-index:0}
+.glow.espera {background:radial-gradient(1000px 560px at 25% -5%,rgba(100,116,139,.20),transparent 60%)}
+.glow.libres {background:radial-gradient(1000px 560px at 25% -5%,rgba(34,197,94,.22),transparent 60%)}
+.glow.lleno  {background:radial-gradient(1000px 560px at 25% -5%,rgba(239,68,68,.22),transparent 60%)}
+body[data-resumen="espera"] .glow.espera,
+body[data-resumen="libres"] .glow.libres,
+body[data-resumen="lleno"]  .glow.lleno{opacity:1}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(800px 500px at 100% 0,rgba(56,189,248,.10),transparent 60%)}
+
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:22px;
+  padding:20px 22px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+h3{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* ===================================================================
+   3. ENCABEZADO
+   =================================================================== */
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-weight:800;font-size:1.5rem;
+  background:linear-gradient(135deg,#38bdf8,#6366f1);box-shadow:0 8px 24px -6px rgba(99,102,241,.6)}
+h1{font-size:1.4rem;font-weight:700;letter-spacing:.01em}
+.brand p{font-size:.85rem;color:var(--muted);margin-top:2px}
+.top-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#reloj{font-variant-numeric:tabular-nums;color:var(--muted);font-size:1rem;margin:0 6px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);font-size:.82rem;color:var(--muted);transition:.4s}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--espera);transition:.4s}
+.pill.ok{color:#bbf7d0}   .pill.ok i{background:var(--libre);box-shadow:0 0 8px var(--libre)}
+.pill.warn{color:#fde68a} .pill.warn i{background:var(--alerta);box-shadow:0 0 8px var(--alerta)}
+.pill.bad{color:#fecaca}  .pill.bad i{background:var(--ocupado);box-shadow:0 0 8px var(--ocupado)}
+.btn{cursor:pointer;background:var(--card);border:1px solid var(--line);color:var(--txt);
+  width:38px;height:38px;border-radius:12px;font-size:1.1rem;transition:.2s}
+.btn:hover{background:rgba(255,255,255,.10)}
+
+/* ===================================================================
+   4. RESUMEN GENERAL (arriba)
+   =================================================================== */
+.resumen{display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;margin-bottom:18px}
+.res-main small{font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.res-main .num{font-size:clamp(2.4rem,5vw,3.8rem);font-weight:800;line-height:1.05;margin-top:4px;font-variant-numeric:tabular-nums}
+.res-main .num span{font-size:1.15rem;font-weight:500;color:var(--muted);margin-left:10px}
+.res-estado{margin-top:2px;font-size:1rem;font-weight:600}
+body[data-resumen="libres"] .res-estado{color:#86efac}
+body[data-resumen="lleno"]  .res-estado{color:#fca5a5}
+body[data-resumen="espera"] .res-estado{color:var(--muted)}
+
+/* Cuadraditos: uno por espacio, con su color */
+.dots{display:flex;gap:8px;flex-wrap:wrap;max-width:420px}
+.dot{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:.85rem;font-weight:700;
+  background:var(--espera);color:#0b1020;transition:background .5s}
+.dot.libre{background:var(--libre);box-shadow:0 0 14px rgba(34,197,94,.45)}
+.dot.ocupado{background:var(--ocupado);box-shadow:0 0 14px rgba(239,68,68,.45)}
+.dot.sin{background:transparent;border:2px dashed var(--alerta);color:var(--alerta)}
+
+.chips{display:flex;gap:26px;flex-wrap:wrap}
+.chip{text-align:center}
+.chip b{display:block;font-size:1.7rem;font-variant-numeric:tabular-nums}
+.chip span{font-size:.7rem;color:var(--muted);letter-spacing:.07em;text-transform:uppercase}
+
+/* ===================================================================
+   5. TARJETAS DE SENSORES (una por espacio)
+   =================================================================== */
+.sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:18px;margin-bottom:18px}
+.sensors.solo{grid-template-columns:minmax(0,1000px);justify-content:center}
+
+.sensor{--c:var(--espera);--ca:rgba(100,116,139,.35);
+  display:flex;flex-direction:column;gap:14px;
+  border-color:var(--ca);box-shadow:0 26px 60px -40px var(--ca);transition:border-color .6s,box-shadow .6s}
+.sensor[data-estado="libre"]  {--c:var(--libre);  --ca:rgba(34,197,94,.42)}
+.sensor[data-estado="ocupado"]{--c:var(--ocupado);--ca:rgba(239,68,68,.42)}
+
+.s-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.s-head h2{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:10px}
+.live-dot{position:relative;width:10px;height:10px;border-radius:50%;background:var(--c);transition:background .5s}
+.live-dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--c);animation:ping 1.8s ease-out infinite}
+
+.banner{background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.5);color:#fcd34d;
+  padding:8px 14px;border-radius:12px;font-size:.84rem}
+.sensor[data-link="off"] .s-body,
+.sensor[data-link="off"] .s-metrics,
+.sensor[data-link="off"] .spark{filter:grayscale(.9);opacity:.5}
+.s-body,.s-metrics,.spark{transition:filter .6s,opacity .6s}
+
+.s-body{display:flex;align-items:center;gap:18px}
+.bay{flex:0 0 40%;max-width:250px}
+.bay svg{width:100%;height:auto;display:block}
+.s-info{flex:1;min-width:0}
+.big{font-size:2.3rem;font-weight:800;letter-spacing:.04em;line-height:1.05;color:var(--c);
+  text-shadow:0 0 40px var(--ca);transition:color .5s}
+.sub{font-size:.92rem;color:var(--muted);margin-top:4px}
+.timer{margin-top:14px;display:inline-flex;flex-direction:column;padding:9px 16px;border-radius:14px;
+  background:rgba(0,0,0,.28);border:1px solid var(--line)}
+.timer small{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.timer b{font-size:1.6rem;font-variant-numeric:tabular-nums;font-weight:700}
+
+/* Dibujo del estacionamiento (SVG) */
+.car{transform:translateY(310px);opacity:0;transition:transform 1.2s cubic-bezier(.22,1,.36,1),opacity .6s}
+.sensor[data-estado="ocupado"] .car{transform:translateY(0);opacity:1}
+.p-mark{opacity:.22;transition:opacity .6s}
+.sensor[data-estado="ocupado"] .p-mark{opacity:0}
+.beam{stroke:var(--c);stroke-width:2.5;stroke-dasharray:6 6;animation:dash 1s linear infinite;
+  transform-origin:200px 16px;transition:transform 1s cubic-bezier(.22,1,.36,1),stroke .5s}
+.sensor[data-estado="ocupado"] .beam{transform:scaleY(.118)}
+.lens{fill:var(--c);transition:fill .5s}
+.slot-line{stroke:rgba(255,255,255,.6);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;fill:none}
+
+/* Distancia y WiFi */
+.s-metrics{display:grid;grid-template-columns:1.3fr 1fr;gap:16px}
+.m{display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:14px;background:rgba(0,0,0,.2);border:1px solid var(--line)}
+.val{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+.val small{font-size:.8rem;color:var(--muted);font-weight:500;margin-left:5px}
+.val.chico{font-size:1.05rem}
+.gauge{position:relative;height:8px;border-radius:99px;background:rgba(255,255,255,.08);margin:14px 0 0}
+.gauge-fill{height:100%;width:0;border-radius:99px;background:var(--c);box-shadow:0 0 12px var(--ca);transition:width .6s,background .5s}
+.gauge-th{position:absolute;top:-5px;bottom:-5px;width:2px;background:#fff;opacity:.85}
+.wifi-row{display:flex;align-items:center;gap:12px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:24px}
+.bars b{width:6px;border-radius:2px;background:rgba(255,255,255,.14);transition:background .4s}
+.bars b:nth-child(1){height:6px}.bars b:nth-child(2){height:12px}
+.bars b:nth-child(3){height:18px}.bars b:nth-child(4){height:24px}
+.bars b.on{background:var(--accent)}
+.dato{font-size:.8rem;color:var(--muted)}
+
+/* Mini gráfico de distancia */
+.spark{position:relative;height:74px}
+.spark canvas{position:absolute;inset:0;width:100%;height:100%}
+
+.s-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.76rem;color:var(--muted);
+  border-top:1px dashed rgba(255,255,255,.1);padding-top:10px}
+.s-foot b{color:var(--txt);font-variant-numeric:tabular-nums;font-weight:600}
+
+/* En modo "solo 1 sensor" la tarjeta se ve más grande */
+.sensors.solo .big{font-size:clamp(2.6rem,6vw,4.8rem)}
+.sensors.solo .bay{max-width:360px}
+.sensors.solo .sub{font-size:1.05rem}
+.sensors.solo .timer b{font-size:2rem}
+.sensors.solo .val{font-size:1.9rem}
+.sensors.solo .spark{height:110px}
+
+/* Mensaje cuando todavía no hay sensores */
+.vacio{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--muted)}
+.vacio .ico{font-size:2.6rem;margin-bottom:10px}
+.vacio b{display:block;color:var(--txt);font-size:1.15rem;margin-bottom:6px}
+
+/* ===================================================================
+   6. REGISTRO DE EVENTOS
+   =================================================================== */
+#registro{list-style:none;margin-top:10px;max-height:210px;overflow-y:auto;padding-right:4px}
+#registro li{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.1);font-size:.88rem}
+#registro .t{font-family:Consolas,monospace;color:var(--muted);font-size:.8rem;padding-top:1px}
+#registro .d{grid-column:2;font-size:.78rem;color:var(--muted)}
+#registro .ocupado .m{color:#fca5a5}
+#registro .libre   .m{color:#86efac}
+#registro .ok      .m{color:#86efac}
+#registro .warn    .m{color:#fcd34d}
+#registro .info    .m{color:#7dd3fc}
+footer{margin-top:18px;text-align:center;font-size:.76rem;color:var(--muted)}
+
+/* ===================================================================
+   7. ANIMACIONES Y PANTALLAS PEQUEÑAS
+   =================================================================== */
+@keyframes ping{0%{transform:scale(1);opacity:.7}100%{transform:scale(3.2);opacity:0}}
+@keyframes dash{to{stroke-dashoffset:-24}}
+@media (max-width:520px){
+  .sensors{grid-template-columns:1fr}
+  .s-body{flex-direction:column}
+  .bay{flex-basis:auto;width:70%}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+
+<body data-resumen="espera">
+
+<!-- Resplandores de fondo (decorativos) -->
+<div class="glow espera"></div><div class="glow libres"></div><div class="glow lleno"></div>
+
+<div class="wrap">
+
+  <!-- ===================== ENCABEZADO ===================== -->
+  <header>
+    <div class="brand">
+      <div class="logo">P</div>
+      <div>
+        <h1>Estacionamiento UAI</h1>
+        <p>Prototipo 1 · Monitoreo multi-sensor en tiempo real</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <span class="pill" id="pillFb"><i></i><span>Conectando…</span></span>
+      <span class="pill" id="pillSensores"><i></i><span>Buscando sensores…</span></span>
+      <span id="reloj">--:--:--</span>
+      <button class="btn" id="btnFs" title="Pantalla completa (F)">⛶</button>
+    </div>
+  </header>
+
+  <!-- ===================== RESUMEN GENERAL ===================== -->
+  <section class="card resumen">
+    <div class="res-main">
+      <small>Disponibilidad</small>
+      <div class="num"><b id="resBig">—</b><span id="resTxt">espacios libres</span></div>
+      <div class="res-estado" id="resEstado">Esperando sensores…</div>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="chips">
+      <div class="chip"><b id="chOcup">0</b><span>Ocupados</span></div>
+      <div class="chip"><b id="chSin">0</b><span>Sin señal</span></div>
+      <div class="chip"><b id="chPct">0%</b><span>Ocupación</span></div>
+      <div class="chip"><b id="chTotal">0</b><span>Ingresos (sesión)</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== TARJETAS DE SENSORES =====================
+       Aquí el programa agrega una tarjeta por cada sensor encontrado. -->
+  <main class="sensors" id="sensores">
+    <div class="card vacio" id="vacio">
+      <div class="ico">📡</div>
+      <b>Esperando sensores…</b>
+      Los espacios aparecerán solos cuando una placa envíe datos<br>(sensor_1, sensor_2, sensor_3…).
+    </div>
+  </main>
+
+  <!-- ===================== REGISTRO ===================== -->
+  <section class="card">
+    <h3>Registro de eventos</h3>
+    <ul id="registro"></ul>
+  </section>
+
+  <footer>Prototipo 1 · Datos en tiempo real vía Firebase · Tecla F: pantalla completa</footer>
+</div>
+
+<!-- ===================================================================
+     PLANTILLA DE TARJETA
+     Este bloque no se ve: es el "molde" que se copia por cada sensor.
+     =================================================================== -->
+<template id="tplSensor">
+  <article class="card sensor" data-estado="cargando" data-link="on">
+    <div class="s-head">
+      <h2><span class="live-dot"></span><span data-r="titulo">Espacio</span></h2>
+      <span class="pill" data-r="pill"><i></i><span>Esperando</span></span>
+    </div>
+
+    <div class="banner" data-r="banner" hidden>⚠ SIN SEÑAL · Se muestra el último dato recibido</div>
+
+    <div class="s-body">
+      <div class="bay">
+        <svg viewBox="0 0 400 270" xmlns="http://www.w3.org/2000/svg">
+          <!-- Suelo del espacio y líneas de pintura -->
+          <rect x="100" y="22" width="200" height="232" rx="10" fill="rgba(255,255,255,.04)"/>
+          <path class="slot-line" d="M100 22 V254 H300 V22"/>
+          <text class="p-mark" x="200" y="165" text-anchor="middle" font-size="96" font-weight="800" fill="#fff" font-family="Arial,sans-serif">P</text>
+          <!-- Sensor montado arriba y su rayo láser -->
+          <line class="beam" x1="200" y1="16" x2="200" y2="254"/>
+          <rect x="174" y="1" width="52" height="15" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+          <circle class="lens" cx="200" cy="8.5" r="3.5"/>
+          <!-- Auto visto desde arriba -->
+          <g class="car">
+            <rect x="132" y="70" width="14" height="32" rx="5" fill="#0f172a"/>
+            <rect x="254" y="70" width="14" height="32" rx="5" fill="#0f172a"/>
+            <rect x="132" y="170" width="14" height="32" rx="5" fill="#0f172a"/>
+            <rect x="254" y="170" width="14" height="32" rx="5" fill="#0f172a"/>
+            <rect x="140" y="44" width="120" height="188" rx="38" fill="#3b82f6"/>
+            <rect x="140" y="44" width="120" height="188" rx="38" fill="none" stroke="#93c5fd" stroke-opacity=".5" stroke-width="2"/>
+            <path d="M158 120 Q200 102 242 120 L236 148 L164 148 Z" fill="#0b1b3a"/>
+            <rect x="160" y="146" width="80" height="38" rx="10" fill="#2563eb"/>
+            <path d="M164 184 L236 184 L242 202 Q200 214 158 202 Z" fill="#0b1b3a"/>
+            <ellipse cx="134" cy="126" rx="6" ry="9" fill="#2563eb"/>
+            <ellipse cx="266" cy="126" rx="6" ry="9" fill="#2563eb"/>
+            <rect x="152" y="52" width="24" height="9" rx="4" fill="#fde68a"/>
+            <rect x="224" y="52" width="24" height="9" rx="4" fill="#fde68a"/>
+            <rect x="152" y="216" width="24" height="7" rx="3" fill="#ef4444"/>
+            <rect x="224" y="216" width="24" height="7" rx="3" fill="#ef4444"/>
+          </g>
+        </svg>
+      </div>
+      <div class="s-info">
+        <div class="big" data-r="estado">CARGANDO</div>
+        <div class="sub" data-r="sub">Esperando datos…</div>
+        <div class="timer"><small data-r="timerLabel">Tiempo en este estado</small><b data-r="timer">--:--</b></div>
+      </div>
+    </div>
+
+    <div class="s-metrics">
+      <div class="m">
+        <h3>📏 Distancia</h3>
+        <div class="val"><span data-r="dist">--</span><small data-r="unit">cm</small></div>
+        <div class="gauge"><div class="gauge-fill" data-r="fill"></div><div class="gauge-th" data-r="th"></div></div>
+      </div>
+      <div class="m">
+        <h3>📶 WiFi</h3>
+        <div class="wifi-row">
+          <div class="bars" data-r="bars"><b></b><b></b><b></b><b></b></div>
+          <div>
+            <div class="val chico" data-r="wifiVal">--</div>
+            <div class="dato" data-r="wifiTxt">Sin datos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spark"><canvas data-r="spark"></canvas></div>
+
+    <div class="s-foot">
+      <span>Último dato hace <b data-r="ultimo">--</b></span>
+      <span>Encendido <b data-r="uptime">--</b></span>
+      <span>Ingresos <b data-r="ocup">0</b></span>
+    </div>
+  </article>
+</template>
+
+<script>
+/* ===================================================================
+   CONFIGURACIÓN (se puede editar)
+   =================================================================== */
+const DATABASE_URL = "https://estacionamiento-uai-default-rtdb.firebaseio.com";
+const UMBRAL_CM    = 50;      // Debe coincidir con UMBRAL_MM del firmware (500 mm = 50 cm)
+const MAX_CM       = 120;     // Largo máximo del medidor y del gráfico
+const SIN_SENAL_MS = 10000;   // 10 s sin datos nuevos = "sin señal"
+const MAX_MUESTRAS = 40;      // Puntos del mini gráfico (40 puntos ≈ 80 s)
+const MAX_EVENTOS  = 60;      // Cuántos eventos guarda el registro
+
+/* ===================================================================
+   VARIABLES GENERALES
+   =================================================================== */
+const $ = id => document.getElementById(id);
+const esNum = v => typeof v === "number" && isFinite(v);
+const sensores = new Map();   // Todos los sensores encontrados: "sensor_1" -> {datos}
+let firmaDots = "";           // Para redibujar los cuadraditos solo si cambian
+
+/* ===================================================================
+   FUNCIONES DE FORMATO
+   =================================================================== */
+const pad = n => String(n).padStart(2, "0");
+function fmtDur(s) {                       // 75 -> "01:15"
+  s = Math.max(0, Math.floor(s));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+}
+function fmtUptime(s) {                    // 3700 -> "1 h 1 min"
+  s = Math.floor(s);
+  if (s < 60) return `${s} s`;
+  if (s < 3600) return `${Math.floor(s / 60)} min ${s % 60} s`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ${Math.floor((s % 3600) / 60)} min`;
+  return `${Math.floor(s / 86400)} d ${Math.floor((s % 86400) / 3600)} h`;
+}
+const hora = ts => new Date(ts).toLocaleTimeString("es-CL", { hour12: false });
+
+/* ===================================================================
+   REGISTRO DE EVENTOS (lista general)
+   =================================================================== */
+function registrar(tipo, mensaje, detalle) {
+  const ul = $("registro");
+  const li = document.createElement("li");
+  li.className = tipo;
+  const t = document.createElement("span"); t.className = "t"; t.textContent = hora(Date.now());
+  const m = document.createElement("span"); m.className = "m"; m.textContent = mensaje;
+  li.append(t, m);
+  if (detalle) {
+    const d = document.createElement("span"); d.className = "d"; d.textContent = detalle;
+    li.append(d);
+  }
+  ul.prepend(li);                                           // Lo más nuevo arriba
+  while (ul.children.length > MAX_EVENTOS) ul.lastChild.remove();
+}
+
+/* ===================================================================
+   CREAR / ORDENAR / ELIMINAR TARJETAS
+   =================================================================== */
+
+// Crea la tarjeta de un sensor nuevo copiando la plantilla
+function crearSensor(key, num) {
+  const el = $("tplSensor").content.firstElementChild.cloneNode(true);
+  const r = {};                                             // Atajos a los elementos de la tarjeta
+  el.querySelectorAll("[data-r]").forEach(e => { r[e.dataset.r] = e; });
+
+  r.titulo.textContent = `Espacio N°${num}`;
+  r.th.style.left = (UMBRAL_CM / MAX_CM * 100) + "%";       // Marca del umbral en la barra
+
+  const s = {
+    key, num, el, r,
+    estado: null, distanciaMm: null, muestras: [],
+    tieneLatido: false, ultimoLatido: null, tUltimoDato: 0, enLinea: null, ultimoUptime: null,
+    baseDur: null, tBase: 0, cambioPrev: null, tCambioLocal: Date.now(),
+    uptimeS: null, tUptime: 0,
+    ingresos: 0
+  };
+  sensores.set(key, s);
+  reordenar();
+  new ResizeObserver(() => dibujarSpark(s)).observe(r.spark.parentElement);
+  return s;
+}
+
+// Deja las tarjetas ordenadas (1, 2, 3...) y ajusta el tamaño según cuántas hay
+function reordenar() {
+  const cont = $("sensores");
+  [...sensores.values()].sort((a, b) => a.num - b.num).forEach(s => cont.appendChild(s.el));
+  cont.classList.toggle("solo", sensores.size === 1);       // 1 sensor = tarjeta grande
+  $("vacio").style.display = sensores.size === 0 ? "" : "none";
+}
+
+/* ===================================================================
+   FUNCIONES POR SENSOR
+   =================================================================== */
+
+// Duración en el estado actual (exacta si la placa informa sus segundos)
+function duracionSeg(s) {
+  if (s.baseDur !== null) return s.baseDur + (Date.now() - s.tBase) / 1000;
+  return (Date.now() - s.tCambioLocal) / 1000;
+}
+
+function pintarEstado(s) {
+  const r = s.r;
+  if (s.estado === "OCUPADO") {
+    s.el.dataset.estado = "ocupado";
+    r.estado.textContent = "OCUPADO"; r.sub.textContent = "Vehículo detectado";
+    r.timerLabel.textContent = "Ocupado desde hace";
+  } else if (s.estado === "LIBRE") {
+    s.el.dataset.estado = "libre";
+    r.estado.textContent = "LIBRE"; r.sub.textContent = "Espacio disponible";
+    r.timerLabel.textContent = "Libre desde hace";
+  } else {
+    s.el.dataset.estado = "cargando";
+    r.estado.textContent = "CARGANDO"; r.sub.textContent = "Esperando datos…";
+    r.timerLabel.textContent = "Tiempo en este estado";
+  }
+}
+
+function pintarDistancia(s) {
+  const r = s.r;
+  if (s.distanciaMm === null) {
+    r.dist.textContent = "--"; r.unit.textContent = "cm"; r.fill.style.width = "0%";
+    r.dist.parentElement.classList.remove("chico");
+  } else if (s.distanciaMm < 0) {                           // El sensor no ve nada cercano
+    r.dist.textContent = "Fuera de rango"; r.unit.textContent = "";
+    r.dist.parentElement.classList.add("chico");
+    r.fill.style.width = "100%";
+  } else {
+    const cm = s.distanciaMm / 10;
+    r.dist.textContent = cm.toFixed(1); r.unit.textContent = "cm";
+    r.dist.parentElement.classList.remove("chico");
+    r.fill.style.width = (Math.min(cm, MAX_CM) / MAX_CM * 100) + "%";
+  }
+}
+
+function pintarWifi(s, rssi) {
+  let nivel, txt;
+  if (rssi >= -55)      { nivel = 4; txt = "Excelente"; }
+  else if (rssi >= -67) { nivel = 3; txt = "Buena"; }
+  else if (rssi >= -75) { nivel = 2; txt = "Regular"; }
+  else                  { nivel = 1; txt = "Débil"; }
+  [...s.r.bars.children].forEach((b, i) => b.classList.toggle("on", i < nivel));
+  s.r.wifiVal.textContent = `${rssi} dBm`;
+  s.r.wifiTxt.textContent = txt;
+}
+
+// Mini gráfico de distancia (dibujado a mano en un <canvas>)
+function dibujarSpark(s) {
+  const c = s.r.spark;
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+  }
+  const g = c.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+
+  const padT = 6, padB = 6;
+  const y = cm => padT + (1 - Math.min(Math.max(cm, 0), MAX_CM) / MAX_CM) * (h - padT - padB);
+  const x = i => 4 + (i / (MAX_MUESTRAS - 1)) * (w - 12);
+
+  // Zona de detección (de 0 al umbral) y línea del umbral
+  g.fillStyle = "rgba(239,68,68,.12)";
+  g.fillRect(0, y(UMBRAL_CM), w, y(0) - y(UMBRAL_CM));
+  g.strokeStyle = "rgba(239,68,68,.5)"; g.setLineDash([5, 4]); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, y(UMBRAL_CM)); g.lineTo(w, y(UMBRAL_CM)); g.stroke();
+  g.setLineDash([]);
+
+  const n = s.muestras.length;
+  if (n < 2) {
+    g.fillStyle = "#8b97b1"; g.font = "11px Segoe UI, sans-serif"; g.textAlign = "center";
+    g.fillText("Esperando datos…", w / 2, h / 2 + 4);
+    return;
+  }
+  const off = MAX_MUESTRAS - n;                              // Lo más nuevo queda a la derecha
+  const pts = s.muestras.map((v, i) => [x(off + i), y(v === null ? MAX_CM : v)]);
+
+  const grad = g.createLinearGradient(0, padT, 0, h - padB);
+  grad.addColorStop(0, "rgba(56,189,248,.28)"); grad.addColorStop(1, "rgba(56,189,248,0)");
+  g.beginPath(); g.moveTo(pts[0][0], y(0));
+  pts.forEach(p => g.lineTo(p[0], p[1]));
+  g.lineTo(pts[n - 1][0], y(0)); g.closePath(); g.fillStyle = grad; g.fill();
+
+  g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]));
+  g.strokeStyle = "#38bdf8"; g.lineWidth = 2; g.lineJoin = "round"; g.stroke();
+
+  const u = pts[n - 1];
+  g.beginPath(); g.arc(u[0], u[1], 3.5, 0, Math.PI * 2); g.fillStyle = "#38bdf8"; g.fill();
+}
+
+// Marca al sensor como "en línea" o "sin señal"
+function setEnLinea(s, valor) {
+  if (valor === s.enLinea) return;
+  const antes = s.enLinea;
+  s.enLinea = valor;
+  s.el.dataset.link = valor ? "on" : "off";
+  s.r.banner.hidden = valor;
+  s.r.pill.className = "pill " + (valor ? "ok" : "warn");
+  s.r.pill.lastElementChild.textContent = valor ? "En línea" : "Sin señal";
+  if (antes !== null) registrar(valor ? "ok" : "warn", `Espacio ${s.num} · ${valor ? "sensor reconectado" : "sin señal"}`);
+}
+
+/* ===================================================================
+   PROCESAR LOS DATOS DE UN SENSOR
+   Se ejecuta cada vez que esa placa actualiza algo en Firebase.
+   =================================================================== */
+function procesar(s, d) {
+  const ahora = Date.now();
+  const est = String(d.estado || "").toUpperCase();
+  const nombre = `Espacio ${s.num}`;
+
+  // 1. ¿Sigue vivo? (el "latido" sube con cada envío de la placa)
+  if (esNum(d.latido)) {
+    s.tieneLatido = true;
+    if (d.latido !== s.ultimoLatido) { s.ultimoLatido = d.latido; s.tUltimoDato = ahora; }
+  } else {
+    s.tUltimoDato = ahora;               // Firmware simple: cualquier dato cuenta como señal
+  }
+  setEnLinea(s, true);
+
+  // 2. ¿Se reinició la placa? (su contador de tiempo vuelve a empezar)
+  if (esNum(d.uptime_s)) {
+    if (s.ultimoUptime !== null && d.uptime_s + 5 < s.ultimoUptime) registrar("info", `${nombre} · sensor reiniciado`);
+    s.ultimoUptime = d.uptime_s; s.uptimeS = d.uptime_s; s.tUptime = ahora;
+  }
+
+  // 3. ¿Cambió el estado?
+  if ((est === "LIBRE" || est === "OCUPADO") && est !== s.estado) {
+    const previo = s.estado;
+    let durPrev = duracionSeg(s);        // Cuánto duró el estado anterior
+    if (esNum(d.cambio_s) && s.cambioPrev !== null && d.cambio_s >= s.cambioPrev) durPrev = d.cambio_s - s.cambioPrev;
+
+    s.estado = est;
+    if (previo === null) {
+      registrar("info", `${nombre} · estado inicial ${est}`);
+    } else if (est === "OCUPADO") {
+      s.ingresos++;
+      registrar("ocupado", `${nombre} · vehículo detectado`, `Estuvo libre ${fmtDur(durPrev)}`);
+    } else {
+      registrar("libre", `${nombre} · vehículo se retiró`, `Estuvo ocupado ${fmtDur(durPrev)}`);
+    }
+    s.tCambioLocal = ahora;
+    pintarEstado(s);
+  }
+
+  // 4. Cronómetro del estado con los segundos de la placa
+  if (esNum(d.uptime_s) && esNum(d.cambio_s)) {
+    s.baseDur = Math.max(0, d.uptime_s - d.cambio_s);
+    s.tBase = ahora;
+    s.cambioPrev = d.cambio_s;
+  }
+
+  // 5. Distancia y gráfico
+  if (esNum(d.distancia_mm)) {
+    s.distanciaMm = d.distancia_mm;
+    s.muestras.push(s.distanciaMm < 0 ? null : s.distanciaMm / 10);
+    if (s.muestras.length > MAX_MUESTRAS) s.muestras.shift();
+    pintarDistancia(s);
+    dibujarSpark(s);
+  }
+
+  // 6. WiFi
+  if (esNum(d.rssi)) pintarWifi(s, d.rssi);
+}
+
+/* ===================================================================
+   RESUMEN GENERAL (arriba)
+   =================================================================== */
+function actualizarResumen() {
+  let libres = 0, ocupados = 0, sinSenal = 0, enLinea = 0, ingresos = 0;
+  sensores.forEach(s => {
+    ingresos += s.ingresos;
+    if (s.enLinea === false) sinSenal++;
+    else {
+      if (s.enLinea === true) enLinea++;
+      if (s.estado === "LIBRE") libres++;
+      else if (s.estado === "OCUPADO") ocupados++;
+    }
+  });
+  const total = sensores.size, activos = libres + ocupados;
+
+  // Texto principal y color de fondo según la situación
+  let estado, resumen;
+  if (total === 0)         { estado = "Esperando sensores…";        resumen = "espera"; }
+  else if (activos === 0)  { estado = "Esperando datos válidos…";   resumen = "espera"; }
+  else if (libres === 0)   { estado = "Estacionamiento lleno";      resumen = "lleno"; }
+  else                     { estado = "Hay espacios disponibles";   resumen = "libres"; }
+  document.body.dataset.resumen = resumen;
+
+  $("resBig").textContent = total ? `${libres} de ${total}` : "—";
+  $("resTxt").textContent = total === 1 ? "espacio libre" : "espacios libres";
+  $("resEstado").textContent = estado;
+  $("chOcup").textContent = ocupados;
+  $("chSin").textContent = sinSenal;
+  $("chPct").textContent = (activos ? Math.round(ocupados / activos * 100) : 0) + "%";
+  $("chTotal").textContent = ingresos;
+
+  // Etiqueta superior: cuántos sensores responden
+  const pill = $("pillSensores");
+  if (total === 0) { pill.className = "pill"; pill.lastElementChild.textContent = "Buscando sensores…"; }
+  else {
+    pill.className = "pill " + (enLinea === total ? "ok" : (enLinea === 0 ? "bad" : "warn"));
+    pill.lastElementChild.textContent = `${enLinea} de ${total} sensor${total === 1 ? "" : "es"} en línea`;
+  }
+
+  // Cuadraditos (uno por espacio): solo se redibujan si algo cambió
+  const lista = [...sensores.values()].sort((a, b) => a.num - b.num);
+  const clase = s => s.enLinea === false ? "sin" : (s.estado === "LIBRE" ? "libre" : (s.estado === "OCUPADO" ? "ocupado" : ""));
+  const firma = lista.map(s => s.num + clase(s)).join("|");
+  if (firma !== firmaDots) {
+    firmaDots = firma;
+    const cont = $("dots");
+    cont.replaceChildren();
+    lista.forEach(s => {
+      const d = document.createElement("div");
+      d.className = "dot " + clase(s);
+      d.textContent = s.num;
+      d.title = `Espacio ${s.num}: ` + (clase(s) === "sin" ? "sin señal" : (s.estado || "esperando"));
+      cont.appendChild(d);
+    });
+  }
+}
+
+/* ===================================================================
+   RELOJ INTERNO: se ejecuta cada segundo
+   =================================================================== */
+function tick() {
+  const ahora = Date.now();
+  $("reloj").textContent = hora(ahora);
+
+  sensores.forEach(s => {
+    // Aviso de "sin señal" si la placa dejó de enviar
+    if (s.tieneLatido && s.enLinea && ahora - s.tUltimoDato > SIN_SENAL_MS) setEnLinea(s, false);
+
+    if (s.tUltimoDato) s.r.ultimo.textContent = `${Math.floor((ahora - s.tUltimoDato) / 1000)} s`;
+    if (s.uptimeS !== null) s.r.uptime.textContent = fmtUptime(s.uptimeS + (s.enLinea ? (ahora - s.tUptime) / 1000 : 0));
+    s.r.timer.textContent = (s.estado && s.enLinea !== false) ? fmtDur(duracionSeg(s)) : "--:--";
+    s.r.ocup.textContent = s.ingresos;
+  });
+  actualizarResumen();
+}
+
+/* ===================================================================
+   INICIO: conectar con Firebase y escuchar TODOS los sensores
+   =================================================================== */
+firebase.initializeApp({ databaseURL: DATABASE_URL });
+const db = firebase.database();
+
+// Etiqueta de conexión con Firebase
+db.ref(".info/connected").on("value", snap => {
+  const ok = snap.val() === true;
+  const pill = $("pillFb");
+  pill.className = "pill " + (ok ? "ok" : "bad");
+  pill.lastElementChild.textContent = ok ? "Firebase conectado" : "Firebase sin conexión";
+});
+
+// Se llama cuando aparece un sensor o cuando alguno actualiza sus datos
+function alRecibir(snap) {
+  const m = /^sensor_(\d+)$/.exec(snap.key);   // Solo nos interesan los nombres sensor_1, sensor_2...
+  if (!m) return;
+  const d = snap.val();
+  if (!d || typeof d !== "object") return;
+  const s = sensores.get(snap.key) || crearSensor(snap.key, parseInt(m[1], 10));
+  procesar(s, d);
+  actualizarResumen();
+}
+
+const raiz = db.ref("/");
+raiz.on("child_added", alRecibir, err => {
+  registrar("warn", "No se pudo leer la base de datos", err.message + " · Revisa las reglas de Firebase");
+});
+raiz.on("child_changed", alRecibir);
+raiz.on("child_removed", snap => {             // Si se borra un sensor de la base, se quita su tarjeta
+  const s = sensores.get(snap.key);
+  if (!s) return;
+  s.el.remove(); sensores.delete(snap.key);
+  registrar("warn", `Espacio ${s.num} eliminado de la base de datos`);
+  reordenar(); actualizarResumen();
+});
+
+registrar("info", "Monitor iniciado · buscando sensores en la base de datos");
+setInterval(tick, 1000); tick();
+
+// Pantalla completa (botón o tecla F)
+$("btnFs").addEventListener("click", () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  else document.exitFullscreen && document.exitFullscreen();
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "f" || e.key === "F") && !e.ctrlKey && !e.metaKey && !e.altKey) $("btnFs").click();
+});
+</script>
+</body>
+</html>

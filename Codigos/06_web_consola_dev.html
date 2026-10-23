@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================
+   ESTACIONAMIENTO UAI - WEB 2: CONSOLA DE DESARROLLO
+  ====================================================================
+   Panel para programadores. Muestra:
+     - Izquierda: el estado actual (LIBRE / OCUPADO) y los datos
+                  crudos tal como están en Firebase.
+     - Derecha:   una consola con la hora exacta de cada evento,
+                  útil para comprobar qué tan rápido llegan los datos.
+
+   Se actualiza sola en tiempo real.
+  ====================================================================
+-->
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dev Console - Sensor UAI</title>
+    <style>
+        /* Estilo general: tema oscuro */
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #1e1e1e; color: #e0e0e0; margin: 0; padding: 20px; }
+
+        /* Distribución en 2 columnas: la derecha es el doble de ancha que la izquierda */
+        .dashboard { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+
+        /* Cada "tarjeta" gris del panel */
+        .panel { background: #2d2d2d; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        h2 { color: #4DA8DA; font-size: 1.2em; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; }
+
+        /* Cuadro grande que muestra el estado actual */
+        #indicador {
+            width: 100%; height: 120px; border-radius: 6px; display: flex;
+            align-items: center; justify-content: center; font-size: 2em;
+            font-weight: bold; background: #424242; transition: 0.4s;
+            margin-bottom: 20px; letter-spacing: 2px;
+        }
+
+        /* Caja con los datos crudos (texto verde estilo terminal) */
+        .raw-data { background: #121212; padding: 15px; border-radius: 6px; font-family: monospace; color: #a6e22e; }
+
+        /* Caja de la consola de eventos (con scroll si hay muchos mensajes) */
+        .log-container { height: 500px; overflow-y: auto; background: #121212; padding: 15px; border-radius: 6px; font-family: monospace; }
+        .log-entry { margin-bottom: 8px; border-bottom: 1px dashed #333; padding-bottom: 8px; }
+        .timestamp { color: #888; margin-right: 12px; }   /* La hora aparece en gris */
+    </style>
+
+    <!-- Librerías de Firebase (necesarias para leer la base de datos) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+
+        <!-- COLUMNA IZQUIERDA: estado y datos crudos -->
+        <div class="panel">
+            <h2>Monitor de Estado</h2>
+            <div id="indicador">ESPERANDO...</div>
+            <h2>Datos Crudos (Firebase)</h2>
+            <pre class="raw-data" id="rawData">{}</pre>
+        </div>
+
+        <!-- COLUMNA DERECHA: registro de eventos con hora -->
+        <div class="panel">
+            <h2>Consola de Eventos (Timestamps)</h2>
+            <div class="log-container" id="eventLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Conexión a Firebase
+        const firebaseConfig = { databaseURL: "https://estacionamiento-uai-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const sensorRef = database.ref('/sensor_1');   // Escuchamos TODO lo que cuelga de sensor_1
+
+        // 2. Atajos a los elementos de la página
+        const indicador = document.getElementById('indicador');
+        const eventLog = document.getElementById('eventLog');
+        const rawData = document.getElementById('rawData');
+        let ultimoEstado = null;   // Recuerda el estado anterior para detectar cambios
+
+        // 3. Función que escribe una línea nueva en la consola, con la hora exacta
+        //    (incluye milisegundos). Las más nuevas aparecen arriba.
+        function agregarLog(mensaje, color = "#e0e0e0") {
+            const now = new Date();
+            const time = now.toLocaleTimeString() + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            eventLog.innerHTML = `<div class="log-entry"><span class="timestamp">[${time}]</span> <span style="color: ${color}">${mensaje}</span></div>` + eventLog.innerHTML;
+        }
+
+        agregarLog("Dashboard inicializado. Escuchando base de datos...", "#4DA8DA");
+
+        // 4. Se ejecuta cada vez que algo cambia en Firebase
+        sensorRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;   // Si no hay datos todavía, no hace nada
+
+            // Muestra los datos crudos formateados como JSON
+            rawData.innerText = JSON.stringify(data, null, 2);
+            const estadoActual = data.estado;
+
+            if (estadoActual !== ultimoEstado) {
+                // El estado CAMBIÓ: actualiza el cuadro grande y avisa en la consola
+                indicador.innerText = estadoActual;
+                if (estadoActual === "LIBRE") {
+                    indicador.style.backgroundColor = "#2e7d32";   // Verde
+                    agregarLog(`Transición: LIBRE`, "#81c784");
+                } else if (estadoActual === "OCUPADO") {
+                    indicador.style.backgroundColor = "#c62828";   // Rojo
+                    agregarLog(`Transición: OCUPADO`, "#e57373");
+                }
+                ultimoEstado = estadoActual;
+            } else {
+                // El estado es el mismo: solo deja constancia de que llegó un dato
+                agregarLog("Ping recibido. El estado se mantiene.", "#757575");
+            }
+        });
+    </script>
+</body>
+</html>
