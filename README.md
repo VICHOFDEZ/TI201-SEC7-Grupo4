@@ -5,16 +5,16 @@
   - Renato Díaz
   - Mateo Soliz
   
-- **ODS Seleccionado:** [ODS 11: Cuidades y comunidades sostenibles
-- **Problema a resolver:** [Descripción breve]
+- **ODS Seleccionado: ODS 11: Cuidades y comunidades sostenibles
+- **Problema a resolver: Nuestro proyecto busca resolver una problematica importante que presenta la universidad Adolfo Ibañez: Falta de informacion en tiempo real la disponibilidad de estacionamientos dentro de los distintos edificios. 
 
 ### Descripción del Proyecto
-[Breve descripción de la solución IoT propuesta]
+Para responder a esta problematica diseñamos un sistema Iot, que gracias a un sensor detecta si hay un auto estacionado sobre el dispositivo. Una vez que que el detector confirmo que hay un auto/objeto en el lugar del estacionamiento manda una señal cambiando el estado del estacionamiento de Disponible a Ocupado y viceversa cuando el auto se retira del lugar. 
 
 ### Estado del Proyecto
-- **Versión actual:** v3.0
-- **Última actualización:** [Fecha]
-- **Estado:** Prototipo final
+- **Versión actual: Versión de entrega N°2 
+- **Última actualización: 27/10/2026
+- **Estado: Versión alfa 
 
 ---
 
