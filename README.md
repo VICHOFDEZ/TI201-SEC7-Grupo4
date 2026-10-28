@@ -5,7 +5,7 @@
   - Renato Díaz
   - Mateo Soliz
   
-- **ODS Seleccionado:** [Número y nombre]
+- **ODS Seleccionado:** [ODS 11: Cuidades y comunidades sostenibles
 - **Problema a resolver:** [Descripción breve]
 
 ### Descripción del Proyecto
