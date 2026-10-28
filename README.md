@@ -52,10 +52,10 @@ Para responder a esta problematica diseñamos un sistema Iot, que gracias a un s
 - [ ] BOM completo
 - [ ] Fotos de alta resolución
 
-### Software ✓ (Vicente)
-- [ ] Código comentado
-- [ ] Librerías documentadas
-- [ ] Manual de instalación
+### Software ✓
+- [✓] Código comentado
+- [✓] Librerías documentadas
+- [✓] Manual de instalación
 
 ### Diseño 3D ✓ (Gaspar)
 - [ ] Archivos Fusion 360 (.f3d) con TODOS los componentes
