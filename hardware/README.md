@@ -16,7 +16,8 @@ Batería 18650
 Portabatería 18650 con Módulo de Carga
 Cables de conexión
 
-#### `fotos/`
+#### `fotos/` 
+- 02_vista_general.jpg
 Fotografías de alta resolución del prototipo ensamblado
 
 ---
