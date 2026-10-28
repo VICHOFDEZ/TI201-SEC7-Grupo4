@@ -1,19 +1,18 @@
 # Diseño 3D - Documentación
 
 ## ⚠️ REQUISITO CRÍTICO
+El modelo tridimensional corresponde a un sensor de estacionamiento que utiliza tecnología infrarroja para medir distancias.
 
-El modelo 3D debe incluir **TODOS** los componentes del prototipo:
-- ✅ Encapsulado exterior completo
-- ✅ Placa ESP32/Arduino (con dimensiones exactas)
-- ✅ Todos los sensores en posición de instalación
-- ✅ Todos los actuadores
-- ✅ Batería / fuente de alimentación
-- ✅ Cableado (routing aproximado)
-- ✅ Sistema de montaje (brackets, tornillos)
-- ✅ Orificios de ventilación (si aplica)
+### Componentes del prototipo
 
-**NO ES ACEPTABLE:** Solo el encapsulado vacío sin componentes internos
-
+- Carcasa exterior de PLA.
+- Placa NodeMCU ESP8266.
+- Sensor de distancia GY-530 (VL53L0X).
+- Batería recargable 18650.
+- Módulo Battery Shield V3.
+- Ventana de plástico transmisor de infrarrojos.
+- Junta de sellado NBR.
+- Soportes, conectores y tornillería.
 ---
 
 ## Carpetas
@@ -30,38 +29,54 @@ Planos técnicos con cotas
 ---
 
 ## Especificaciones
+Software: Autodesk Fusion 360
 
-**Software:** Autodesk Fusion 360  
-**Unidades:** Milímetros (mm)  
-**Escala:** 1:1 (dimensiones reales)
+Unidades: Milímetros (mm)
 
-**Dimensiones externas:** [X mm × Y mm × Z mm]  
-**Peso estimado:** [XXX gramos]  
-**Material:** [PLA, ABS, PETG, etc.]
+Escala del modelo CAD: 1:1
+
+Escala de los planos técnicos: 1:2
+
+Dimensiones nominales del conjunto:
+
+Diámetro exterior: 150 mm.
+
+Profundidad total: 40 mm.
+
+Peso estimado: Pendiente de determinar mediante las propiedades físicas del modelo y la batería real.
+
+Material de fabricación de la carcasa: PLA.
+
+Otros materiales: Plástico transmisor de infrarrojos, caucho NBR y componentes electrónicos comerciales.
 
 ---
 
 ## Consideraciones de Diseño
 
 ### Funcionales
-- [ ] Acceso a puertos USB/alimentación
-- [ ] Ventilación adecuada
-- [ ] Protección de componentes
-- [ ] Fácil acceso para mantenimiento
-- [ ] Resistencia a condiciones ambientales
+-Integración del sensor infrarrojo en la parte frontal del dispositivo.
+-Espacio interior destinado al NodeMCU ESP8266 y al módulo de alimentación.
+-Incorporación de una batería recargable 18650.
+-Ventana frontal para permitir el paso de luz infrarroja.
+-Junta de sellado NBR para reducir el ingreso de agua.
+-Sistema de montaje mediante tornillos.
+-Acceso a alimentación y conexiones eléctricas sujeto a verificación en el prototipo.
+-Distribución definitiva del cableado pendiente de validación.
 
 ### Fabricación
-- [ ] Imprimible sin soportes excesivos
-- [ ] Tolerancias de ensamble (+0.2mm)
-- [ ] Grosor de pared mínimo 2mm
-- [ ] Sin ángulos imposibles (overhangs <45°)
+-Carcasa diseñada para fabricación mediante impresión 3D en PLA.
+-Base y cubierta superior modeladas como componentes independientes.
+-Tolerancia general propuesta: ±0,5 mm.
+-Tolerancia de encajes propuesta: ±0,2 mm.
+-Diseño paramétrico que permite modificar dimensiones y geometrías.
+-Las tolerancias deberán comprobarse mediante pruebas de impresión y ensamblaje
 
 ---
 
 ## Configuración de Impresión 3D (si fue utilizada)
 
 **Impresora:** [Modelo]  
-**Material:** [PLA/ABS/PETG]  
+**Material:** [PLA]  
 **Calidad de capa:** 0.2mm  
 **Relleno:** 20-30%  
 **Soportes:** [Sí/No - dónde]  
