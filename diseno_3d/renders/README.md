@@ -89,6 +89,7 @@ Plástico transmisor de infrarrojos: ventana frontal del sensor.
 Caucho NBR: junta de sellado para reducir el ingreso de agua.
 Componentes electrónicos comerciales: NodeMCU ESP8266, sensor GY-530, Battery Shield V3 y batería 18650.
 Acero: tornillería y elementos de fijación.
+
 Resultado final
 
 Los cuatro renders permiten visualizar el diseño del sensor de estacionamiento desde diferentes perspectivas y complementan el modelo paramétrico de Fusion 360 y los planos técnicos desarrollados.
