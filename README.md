@@ -47,17 +47,17 @@
 
 ##  Checklist de Entrega
 
-### Hardware ✓
+### Hardware ✓ (Mateo / Renato)
 - [ ] Esquema del circuito (Fritzing/Wokwi)
 - [ ] BOM completo
 - [ ] Fotos de alta resolución
 
-### Software ✓
+### Software ✓ (Vicente)
 - [ ] Código comentado
 - [ ] Librerías documentadas
 - [ ] Manual de instalación
 
-### Diseño 3D ✓
+### Diseño 3D ✓ (Gaspar)
 - [ ] Archivos Fusion 360 (.f3d) con TODOS los componentes
 - [ ] Renders de alta calidad (1+ ángulos)
 - [ ] Planos técnicos
