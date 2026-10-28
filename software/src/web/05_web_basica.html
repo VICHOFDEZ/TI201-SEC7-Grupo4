@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================
+   ESTACIONAMIENTO UAI - WEB 1: PANTALLA BÁSICA
+  ====================================================================
+   Muestra un cuadro grande que cambia de color según el estado
+   del estacionamiento:
+      Verde = LIBRE   |   Rojo = OCUPADO   |   Gris = cargando
+
+   Se actualiza sola en tiempo real: cuando la placa cambia el valor
+   en Firebase, esta página lo refleja sin necesidad de recargar.
+  ====================================================================
+-->
+<html>
+<head>
+    <title>Estacionamiento UAI - Básico</title>
+
+    <!-- Librerías de Firebase (necesarias para leer la base de datos) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        /* Fondo oscuro, texto blanco y todo centrado */
+        body { text-align: center; font-family: Arial, sans-serif; padding-top: 50px; background: #222; color: white; }
+
+        /* El cuadro grande del estado (gris por defecto). "transition" hace que el cambio de color sea suave */
+        #estado { width: 300px; height: 300px; line-height: 300px; margin: 0 auto; font-size: 3em; font-weight: bold; border-radius: 20px; transition: 0.3s; background: gray; }
+    </style>
+</head>
+<body>
+    <h1>Sensor de Estacionamiento</h1>
+
+    <!-- Aquí se mostrará LIBRE u OCUPADO -->
+    <div id="estado">CARGANDO</div>
+
+    <script>
+        // 1. Dirección de nuestra base de datos en Firebase
+        const firebaseConfig = { databaseURL: "https://estacionamiento-uai-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(firebaseConfig);
+
+        // 2. Apuntamos a la ubicación donde la placa guarda el estado
+        const ref = firebase.database().ref('/sensor_1/estado');
+
+        // 3. "on('value')" se ejecuta una vez al cargar y luego CADA VEZ que el dato cambia
+        ref.on('value', (snapshot) => {
+            const estado = snapshot.val();                    // Lee el valor ("LIBRE" u "OCUPADO")
+            const div = document.getElementById('estado');    // Busca el cuadro en la página
+            div.innerText = estado;                           // Escribe el texto en el cuadro
+
+            // Cambia el color según el estado
+            if (estado === "LIBRE") div.style.background = "#4CAF50";        // Verde
+            else if (estado === "OCUPADO") div.style.background = "#F44336"; // Rojo
+        });
+    </script>
+</body>
+</html>

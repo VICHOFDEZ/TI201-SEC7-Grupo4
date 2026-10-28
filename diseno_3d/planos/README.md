@@ -84,3 +84,30 @@ File > Export > Formato PDF/DWG
 ## Archivos a Entregar
 
 - `plano_conjunto_v3.pdf` - Plano principal
+
+
+Planos técnicos realizados
+
+Se elaboraron los planos técnicos del sensor de estacionamiento utilizando Autodesk Fusion 360, tomando como referencia el modelo tridimensional final del dispositivo.
+
+Los planos fueron desarrollados en formato A3, siguiendo la norma ISO y utilizando milímetros como unidad de medida.
+
+Plano 1: Conjunto general
+Se incluyeron las vistas frontal, superior, lateral derecha e isométrica del sensor de estacionamiento.
+Se incorporaron las principales dimensiones del dispositivo, incluyendo el diámetro exterior de 150 mm, la profundidad total de 40 mm y los agujeros de montaje.
+Además, se realizó un corte transversal A-A para representar la distribución interna del ensamblaje.
+
+Plano 2: Lista de componentes
+Se elaboró una tabla de piezas que identifica los 18 componentes del modelo, incluyendo los elementos estructurales, electrónicos y de fijación.
+
+Plano 3: Base de anclaje
+Se desarrolló el plano de fabricación de la base de anclaje, diseñada para impresión 3D en PLA.
+Se incorporaron vistas frontal y lateral, cotas de fabricación y notas técnicas con tolerancias propuestas.
+
+Plano 4: Cubierta superior
+Se realizó el plano de fabricación de la cubierta superior, también diseñada para impresión 3D en PLA.
+Se incluyeron las dimensiones principales, las vistas necesarias y las notas de fabricación correspondientes.
+Archivo final
+Los cuatro planos se agruparon en un documento PDF para facilitar su revisión y entrega.
+Archivo requerido: plano_conjunto_v3.pdf
+Las tolerancias de fabricación indicadas son propuestas y deberán verificarse durante la impresión y el montaje del prototipo.
