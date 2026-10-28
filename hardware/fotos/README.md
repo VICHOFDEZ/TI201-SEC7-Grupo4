@@ -11,7 +11,7 @@
 ### Tomas Requeridas
 
 1. **Vista general del prototipo completo**
-   - `01_vista_general.jpg`
+   - `01_circuito_interno.jpg`
 
 2. **Vista del circuito interno**
    - `02_circuito_interno.jpg`
@@ -23,13 +23,13 @@
    - `04_sensores.jpg`
 
 5. **Vista de actuadores**
-   - `05_actuadores.jpg`
+   - `03_detalle_conexiones.jpg`
 
 6. **Encapsulado cerrado (si aplica)**
    - `06_encapsulado_cerrado.jpg`
 
 7. **Prototipo en contexto de uso**
-   - `07_contexto_uso.jpg`
+   - `07_contexto_uso.mp4`
 
 ---
 
