@@ -16,9 +16,13 @@
 
 ### Slide 1: Portada (30 seg)
 - Título del proyecto
-- Integrantes
-- ODS Seleccionado
-- Logo Universidad/Curso
+- Gaspar Rosales
+  - Vicente Fernandez
+  - Renato Díaz
+  - Mateo Soliz
+  
+- **ODS Seleccionado: ODS 11: Cuidades y comunidades sostenibles
+- Logo UAI
 
 ### Slides 2-3: Contexto y Problema
 **Slide 2: Problemática ODS**

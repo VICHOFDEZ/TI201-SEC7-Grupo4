@@ -29,7 +29,7 @@
 ### Videos
 
 #### Video de Demostración (Simulación)
-`demo_simulacion_mano.mp4`
+`07_contexto_uso.mp4`
 
 **Contenido del video:**
 - Registro de la prueba de concepto operativa.
