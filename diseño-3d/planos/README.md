@@ -35,7 +35,7 @@ Para cada componente crítico del encapsulado:
 
 ## Formato de Planos
 
-**Tamaño de hoja:** A4 o A3  
+**Tamaño de hoja:** A3  
 **Orientación:** Según convenga  
 **Escala:** 1:1, 1:2, o según sea necesario  
 **Unidades:** Milímetros (mm)

@@ -2,7 +2,7 @@
 
 ## Formato del Documento
 
-**Archivo:** `reporte_final_v3.pdf` — ⚠️ PENDIENTE DE SUBIR a esta carpeta
+**Archivo:** `reporte_final_v3.pdf` — FECHA DESPUES DE ENTREGA DE GITHUB
 
 **Especificaciones:**
 - Formato: PDF

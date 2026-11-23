@@ -2,7 +2,7 @@
 
 ## Formato de la Presentación
 
-**Archivo:** `presentacion_avance3.pdf` o `.pptx` — ⚠️ PENDIENTE DE SUBIR a esta carpeta
+**Archivo:** `presentacion_avance3.pdf` o `.pptx` — NO HAY
 
 **Especificaciones:**
 - Duración: 10 minutos

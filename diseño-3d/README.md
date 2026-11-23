@@ -77,14 +77,14 @@ Planos técnicos con cotas (`v3_plano_conjunto.pdf` y planos `v10_plano_*.pdf`).
 
 ## Configuración de Impresión 3D (si fue utilizada)
 
-**Impresora:** [FALTA: Modelo de la impresora]  
+**Impresora:** [No se sabe]  
 **Material:** PLA  
 **Calidad de capa:** 0.2mm  
 **Relleno:** 20-30%  
-**Soportes:** [FALTA: Indicar si usaron y dónde]  
-**Temperatura nozzle:** [FALTA: ej. 200 °C]  
-**Temperatura cama:** [FALTA: ej. 60 °C]  
-**Velocidad:** [FALTA: ej. 50 mm/s]  
+**Soportes:** Se uso para la cubierta, en coloco en la parte interior.  
+**Temperatura nozzle:** [No se sabe]  
+**Temperatura cama:** [No se sabe]  
+**Velocidad:** [No se sabe]  
 
-**Tiempo estimado de impresión:** [FALTA: X horas]  
-**Peso de material:** [FALTA: X gramos]
+**Tiempo estimado de impresión:** [5 horas]  
+**Peso de material:** [60 gr]
