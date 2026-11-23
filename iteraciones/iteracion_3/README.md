@@ -1,215 +1,140 @@
-# Iteración 3 - Versión Final
+# Iteración 2 - Primera Mejora Significativa
 
 ## Información General
 
-**Fecha:** [XX/XX/2025]  
-**Versión:** v3.0  
-**Estado:** Prototipo de alta resolución - Versión final  
-**Avance asociado:** Avance #3
+**Fecha:** 15/11/2026  
+**Versión:** v2.0  
+**Estado:** Prototipo funcional con maqueta física (Avance #2)  
+**Avance asociado:** Avance #2
 
 ---
 
 ## Descripción
 
-Versión final del prototipo, incorporando todas las mejoras y refinamientos basados en feedback de v2 y testing extensivo con usuarios. Sistema robusto, probado y listo para piloto en contexto real.
+Segunda versión del prototipo presentada en el Avance #2 del curso. En esta etapa se mantuvo la operación con un solo sensor de distancia (50 cm de alcance) y la página web básica de la iteración anterior, incorporando un primer prototipo físico de cartón para validar las dimensiones y el concepto de lo que será el encapsulado en 3D.
 
-**Objetivos alcanzados:**
-- Prototipo completamente funcional y robusto
-- Encapsulado finalizado con todos los componentes
-- Validación con 5+ usuarios del grupo objetivo
-- Métricas de impacto ODS cuantificadas
-- Sistema instalable en contexto urbano real
+**Objetivos de esta iteración:**
+- Realizar la presentación del Avance #2 planificada en el curso.
+- Revalidar el funcionamiento del sensor y su alcance de 50 cm en pruebas en vivo.
+- Construir una maqueta de cartón que represente la forma y el calce del futuro modelo 3D.
+- Identificar mejoras críticas de conectividad, escalabilidad y visualización web para la versión final.
 
 ---
 
-## Cambios Respecto a v2
+## Cambios Respecto a v1
 
 ### Hardware
-**Mejoras implementadas:**
-1. [Mejora 1]
-   - Razón: [Feedback de v2 / necesidad identificada]
-   - Impacto: [Mejora cuantitativa]
+**Agregado:**
+- Ningún componente electrónico nuevo (se continuó trabajando con 1 placa ESP32 y 1 sensor VL53L0X).
 
-2. [Mejora 2]
-   - Razón: [Feedback de v2 / necesidad identificada]
-   - Impacto: [Mejora cuantitativa]
+**Modificado:**
+- Montaje físico del circuito - Razón: adaptarlo dentro de la maqueta de cartón para simular su posición real en el estacionamiento.
 
-**Cambios finales:**
-- [Cambio técnico específico]
-- [Optimización final]
+**Removido:**
+- Ninguno.
 
 ### Software
 **Nuevas funcionalidades:**
-- [Feature final 1]
-- [Feature final 2]
+- Se mantuvo la misma interfaz web básica de la Iteración 1, enfocada únicamente en mostrar el estado del sensor en tiempo real.
 
-**Optimizaciones finales:**
-- [Optimización de código]
-- [Mejora de eficiencia]
+**Optimizaciones:**
+- Validación continua del umbral de detección a 50 cm.
 
-**Manejo de errores:**
-- Implementado manejo robusto de casos extremos
-- Mensajes de error informativos
-- Recuperación automática ante fallas menores
+**Bugs corregidos:**
+- Ninguno mayor en software; se priorizó la validación de la presentación y el prototipo físico.
 
 ### Diseño Mecánico
-**Encapsulado finalizado:**
-- Diseño optimizado para impresión 3D
-- Todos los componentes integrados
-- Sistema de montaje robusto
-- Accesibilidad para mantenimiento
-- Resistencia a condiciones ambientales
+- Construcción de un **prototipo de cartón** a escala real para representar lo que será el encapsulado impreso en 3D.
+- Evaluación inicial de la abertura para el sensor láser y el espacio interno para la placa y cables.
 
 ---
 
-## Fotos del Prototipo Final
+## Fotos del Prototipo v2
 
 Incluir en esta carpeta:
-- `v3_prototipo_final_frontal.jpg`
-- `v3_prototipo_final_posterior.jpg`
-- `v3_interior_componentes.jpg`
-- `v3_instalado_contexto.jpg`
-- `v3_detalle_sensores.jpg`
-- `v3_testing_usuarios.jpg` (múltiples)
+- `v2_prototipo_carton.jpg`
+- `v2_circuito_integrado.jpg`
+- `v2_presentacion_avance2.jpg`
 
 ---
 
-## Resultados Finales
+## Resultados de Testing
 
-### Funcionalidad Completa
-✅ [Todas las funciones planificadas]  
-✅ Sistema opera sin intervención manual  
-✅ Conectividad estable  
-✅ Interfaz de usuario funcional  
-✅ Manejo robusto de errores  
+### Funcionalidad Lograda
+✅ El sensor funciona correctamente y detecta cambios de estado (`LIBRE` / `OCUPADO`) dentro del rango de 50 cm.  
+✅ Presentación del Avance #2 completada según lo planificado en el curso.  
+✅ Validación física del volumen y geometría básica mediante el prototipo de cartón.  
+⚠️ Conexión WiFi inestable en determinados momentos durante las pruebas.  
+⚠️ Interfaz web aún demasiado básica para orientar a un conductor real.
 
-### Testing con 5+ Usuarios
+### Feedback del Avance #2
 
-**Participantes:**
-- N = [número] usuarios
-- Perfil: [Descripción del grupo objetivo]
+**Comentarios del profesor/ayudante:**
+1. Es necesario dar el salto de 1 sensor a múltiples sensores simultáneos y evolucionar la interfaz web para que sea útil en un estacionamiento real.
+   - Acción: Armar el segundo sensor y rediseñar la web evaluando nuevas formas de visualización espacial para la v3.
 
-**Resultados cuantitativos:**
-| Métrica | Promedio | Desv. Std. |
-|---------|----------|------------|
-| Facilidad de uso (1-5) | [X.X] | [X.X] |
-| Satisfacción (1-5) | [X.X] | [X.X] |
-| Tiempo completar tarea (seg) | [XX] | [XX] |
-| Errores cometidos | [X.X] | [X.X] |
-
-**Feedback cualitativo más relevante:**
-- Positivo: "[Cita de usuario]"
-- Positivo: "[Cita de usuario]"
-- A mejorar: "[Cita de usuario]"
-
-### Validación de Impacto ODS
-
-**ODS Seleccionado:** [Número y nombre]
-
-**Métricas de impacto:**
-
-1. **[Métrica 1]**
-   - Baseline (sin prototipo): [Valor]
-   - Con prototipo: [Valor medido]
-   - Mejora: [% o valor absoluto]
-
-2. **[Métrica 2]**
-   - Baseline: [Valor]
-   - Con prototipo: [Valor medido]
-   - Mejora: [% o valor absoluto]
-
-**Proyección de impacto:**
-Si se despliega a escala [barrio/ciudad/región]:
-- [Impacto estimado cuantitativo]
-- [Beneficiarios potenciales]
+2. Pasar de la maqueta de cartón a un encapsulado resistente y mejorar la estabilidad de la conexión.
+   - Acción: Modelar e imprimir la carcasa en 3D y agregar detección de pérdida de señal WiFi en la v3.
 
 ---
 
-## Comparación de las 3 Iteraciones
+## Problemas Pendientes
 
-| Aspecto | v1 | v2 | v3 | Mejora Total |
-|---------|----|----|----| -------------|
-| **Sensores** | 2/3 | 3/3 | 3/3 | ✅ 100% |
-| **Actuadores** | 1/2 | 2/2 | 2/2 | ✅ 100% |
-| **Tiempo respuesta (ms)** | 500 | 200 | 100 | ↓ 80% |
-| **Consumo (mA)** | 250 | 180 | 120 | ↓ 52% |
-| **Tasa errores (%)** | 15 | 5 | 1 | ↓ 93% |
-| **Encapsulado** | ❌ | Prototipo | Finalizado | ✅ |
-| **Usuarios testeados** | 0 | 2 | 5+ | ✅ |
-| **Satisfacción (1-5)** | - | 3.8 | 4.5 | ↑ 18% |
-| **Impacto ODS validado** | ❌ | Parcial | ✅ Completo | ✅ |
+1. **Inestabilidad en la conexión WiFi:**
+   - Descripción: En ciertos momentos la placa pierde conexión con la red WiFi, interrumpiendo la actualización de datos en tiempo real.
+   - Prioridad: Alta
+   - Plan para v3: Implementar reconexión automática en el firmware y un indicador de "Sin señal" en la web cuando el sensor deje de enviar latidos.
 
----
+2. **Interfaz web básica y falta de orientación espacial:**
+   - Descripción: La web actual sigue siendo igual de básica que en la Iteración 1 y no permite saber en qué lugar físico del campus se encuentra el espacio libre.
+   - Prioridad: Alta
+   - Plan para v3: Evaluar e implementar un nuevo diseño web (comparando dos modelos propuestos: un mapa simple de puntos rojo/verde vs. un mapa satelital completo por pasillos con semáforo y Google Maps).
 
-## Fortalezas del Prototipo Final
-
-1. **[Fortaleza 1]**
-   - Evidencia: [Datos de testing]
-
-2. **[Fortaleza 2]**
-   - Evidencia: [Feedback de usuarios]
-
-3. **[Fortaleza 3]**
-   - Evidencia: [Métricas técnicas]
+3. **Cómo vincular la ubicación física con la señal del sensor:**
+   - Descripción: Al proyectar el sistema a múltiples espacios, surge el desafío de definir la mejor forma de visualizar el funcionamiento de cada sensor: si basta con asociar su ubicación fija y, a partir de la señal recibida, mostrar dónde está y si se encuentra ocupado o libre.
+   - Prioridad: Alta
+   - Plan para v3: Definir una arquitectura de mapeo (coordenadas asociadas a cada ID de sensor) que permita escalar de 2 sensores a decenas sin saturar al usuario.
 
 ---
 
-## Limitaciones Identificadas
+## Comparación v1 vs v2
 
-1. **[Limitación 1]**
-   - Descripción: [Detalles]
-   - Impacto: [Evaluación]
-   - Posible solución futura: [Ideas]
-
-2. **[Limitación 2]**
-   - Descripción: [Detalles]
-   - Impacto: [Evaluación]
-   - Posible solución futura: [Ideas]
+| Aspecto | v1 | v2 | Evolución |
+|---------|----|----|-----------|
+| Sensores activos | 1 | 1 | Igual (validación) |
+| Alcance de detección | 50 cm | 50 cm | Estable ✅ |
+| Estabilidad WiFi | Funcional | Con cortes intermitentes | Por mejorar ⚠️ |
+| Interfaz web | Básica | Básica (sin cambios) | Pendiente v3 |
+| Encapsulado | ❌ Sin carcasa | Prototipo de cartón | ✅ Primer avance físico |
 
 ---
 
-## Aprendizajes del Proceso Completo
+## Plan para Iteración 3 (Versión Final)
 
-### Técnicos
-1. [Aprendizaje técnico importante]
-2. [Aprendizaje técnico importante]
+### Mejoras Críticas
 
-### De Diseño
-1. [Lección sobre proceso de diseño]
-2. [Lección sobre proceso de diseño]
+**Hardware:**
+- [ ] Armar e integrar el **segundo sensor** para operar ambos en simultáneo.
+- [ ] Mejorar la estabilidad de la conexión WiFi y probar alimentación autónoma.
 
-### De Trabajo en Equipo
-1. [Lección sobre colaboración]
-2. [Lección sobre colaboración]
+**Software:**
+- [ ] Mejorar la página web evaluando los **dos modelos de interfaz** desarrollados:
+  - *Modelo A (Simple):* Mapa dentro de la web con puntos rojo/verde por sensor.
+  - *Modelo B (Completo):* Mapa satelital real del sector Gimnasio dividido en 5 pasillos con semáforo de congestión (verde, amarillo, rojo) y conexión directa a Google Maps.
+- [ ] Definir el método de visualización de sensores basado en su ubicación y señal de estado (saber dónde está ubicado cada sensor y si está libre u ocupado).
 
-### De Gestión de Proyecto
-1. [Lección sobre planificación]
-2. [Lección sobre gestión de tiempo]
+**Diseño:**
+- [ ] Pasar del prototipo de cartón al diseño 3D definitivo del encapsulado.
+- [ ] Mejorar el ruteo interno de cables y el sistema de montaje.
 
----
-
-## Trabajo Futuro Recomendado
-
-### Mejoras a Corto Plazo
-- [ ] [Mejora 1]
-- [ ] [Mejora 2]
-
-### Mejoras a Mediano Plazo
-- [ ] [Feature adicional 1]
-- [ ] [Optimización 1]
-
-### Escalabilidad
-- [ ] [Consideración para producción masiva]
-- [ ] [Modelo de negocio / sustentabilidad]
-- [ ] [Alianzas estratégicas potenciales]
+**Testing:**
+- [ ] Validar el funcionamiento simultáneo de los 2 sensores en la nueva interfaz web.
+- [ ] Realizar pruebas con estudiantes para elegir la mejor experiencia de usuario.
 
 ---
 
 ## Archivos en esta Carpeta
 
-- `v3_codigo_final.ino` - Código final documentado
-- `v3_esquema_final.png` - Esquema definitivo del circuito
-- `v3_modelo3d_final.f3d` - Diseño 3D completo en Fusion 360
-- `v3_fotos/` - Fotografías del prototipo final
-- `v3_testing_completo.pdf` - Reporte de testing con usuarios
-- `v3_comparativa_versiones.xlsx` - Datos comparativos v1-v2-v3
+- `v2_codigo.ino` - Código del microcontrolador utilizado en el Avance #2
+- `v2_web.html` - Interfaz web básica utilizada en la presentación
+- `v2_fotos/` - Fotografías del prototipo de cartón y pruebas de la presentación
