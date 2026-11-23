@@ -1,80 +1,107 @@
-### Información del Equipo
-- **Integrantes:**
-  - Gaspar Rosales
-  - Vicente Fernandez
-  - Renato Díaz
-  - Mateo Soliz
-  
-- **ODS Seleccionado: ODS 11: Cuidades y comunidades sostenibles
-- **Problema a resolver: Nuestro proyecto busca resolver una problematica importante que presenta la universidad Adolfo Ibañez: Falta de informacion en tiempo real acerca la disponibilidad de estacionamientos dentro de los distintos edificios de la universidad. 
+# Estacionamiento UAI — Sensor IoT de disponibilidad de estacionamientos
 
-### Descripción del Proyecto
-Para responder a esta problematica diseñamos un sistema Iot, que gracias a un sensor detecta si hay un auto estacionado sobre el dispositivo. Una vez que que el detector confirmo que hay un auto/objeto en el lugar del estacionamiento manda una señal cambiando el estado del estacionamiento de Disponible a Ocupado y viceversa cuando el auto se retira del lugar. 
-
-### Estado del Proyecto
-- **Versión actual: Versión de entrega N°2 
-- **Última actualización: 27/10/2026
-- **Estado: Versión alfa 
+**Curso:** TEI201 — Sección 7 — Grupo 4 · Facultad de Ingeniería y Ciencias · Universidad Adolfo Ibáñez
+**Repositorio:** https://github.com/VICHOFDEZ/TI201-SEC7-Grupo4
 
 ---
 
-##  Estructura del Repositorio
+## Información del Equipo
+
+| Integrante | Rol principal |
+|---|---|
+| Gaspar Rosales | Diseño 3D |
+| Vicente Fernández | Software / Web |
+| Renato Díaz | Hardware |
+| Mateo Soliz | Hardware |
+
+- **ODS seleccionado:** ODS 11 — Ciudades y comunidades sostenibles
+- **Problema a resolver:** En la Universidad Adolfo Ibáñez no existe información en tiempo real sobre la disponibilidad de estacionamientos en los distintos sectores del campus. Los conductores dan vueltas buscando un espacio libre, lo que genera pérdida de tiempo, congestión y emisiones innecesarias.
+
+---
+
+## Descripción del Proyecto
+
+Diseñamos un sistema IoT compuesto por un sensor que se instala en cada cajón de estacionamiento. Un sensor de distancia láser **VL53L0X** conectado a una placa **NodeMCU ESP8266** detecta si hay un vehículo sobre el dispositivo. Cuando el cambio se confirma (filtro anti-falsas alarmas), la placa publica el estado (`LIBRE` / `OCUPADO`) en **Firebase Realtime Database**, y una página web muestra en tiempo real qué espacios están disponibles sobre un mapa del estacionamiento.
+
+El dispositivo va dentro de un encapsulado impreso en 3D (PLA), alimentado por una batería 18650 recargable.
+
+---
+
+## Estado del Proyecto
+
+- **Versión actual:** Iteración 3 — Avance #3 / entrega final
+- **Última actualización:** 23/11/2026
+- **Estado:** Prototipo funcional en pruebas de integración (2 sensores + encapsulado 3D + web)
+
+---
+
+## Estructura del Repositorio
+
 ```
-├── hardware/          # Circuitos, esquemas y BOM
-├── software/          # Código Arduino y librerías
-├── diseno_3d/        # Modelos Fusion 360 y renders
-├── testing/          # Validación con usuarios
-├── documentacion/    # Reportes y presentación
-└── iteraciones/      # Historial de versiones
+├── firmware/       # Código del ESP8266 (.ino), páginas web y librerías
+│   ├── src/        #   Sketches de Arduino (cada uno en su carpeta)
+│   ├── web/        #   Interfaces web conectadas a Firebase
+│   ├── librerias/  #   Librerías necesarias
+│   └── docs/       #   Manual de instalación, operación y funciones
+├── hardware/       # Esquemas del circuito, BOM y fotos del prototipo
+├── diseño-3d/      # Modelos OpenSCAD / Fusion 360, STL, renders y planos
+├── testing/        # Datos, evidencias y reportes de validación con usuarios
+├── docs/           # Reporte final y presentación
+├── iteraciones/    # Historial de las versiones v1, v2 y v3
+├── FUENTES.md      # Librerías, código externo y uso de IA declarados
+└── LICENSE
 ```
 
 ---
 
-##  Inicio Rápido
+## Inicio Rápido
 
-### Requisitos Previos
-- Arduino IDE 2.x
-- Fusion 360
-- [Otras herramientas necesarias]
+### Requisitos
+- [Arduino IDE 2.x](https://www.arduino.cc/en/software)
+- Paquete de placas **ESP8266** (NodeMCU 1.0 ESP-12E)
+- Librerías: **Firebase ESP8266 Client** (Mobizt) y **Adafruit VL53L0X**
+- Navegador web moderno (para las interfaces web)
+- OpenSCAD y/o Autodesk Fusion 360 (solo para abrir los modelos 3D)
 
-### Instalación
-1. Clonar el repositorio
-2. Instalar librerías (ver `software/librerias/`)
-3. Cargar código en ESP32/Arduino
-4. [Pasos adicionales]
+### Instalación del firmware
+1. Clonar el repositorio:
+   ```bash
+   git clone https://github.com/VICHOFDEZ/TI201-SEC7-Grupo4.git
+   ```
+2. En Arduino IDE agregar la URL de placas `http://arduino.esp8266.com/stable/package_esp8266com_index.json` e instalar **ESP8266** desde el Gestor de tarjetas.
+3. Instalar las librerías (ver [`firmware/librerias/`](firmware/librerias/README.md)).
+4. Abrir el sketch deseado desde [`firmware/src/`](firmware/src/README.md) (por ejemplo `03_sensor_avanzado/03_sensor_avanzado.ino`).
+5. Reemplazar `TU_WIFI`, `TU_CLAVE_WIFI` y `TU_FIREBASE_SECRET` por los datos reales (**no subir esas claves al repositorio**).
+6. Seleccionar la placa **NodeMCU 1.0 (ESP-12E Module)**, el puerto COM, compilar y subir.
+7. Abrir el Monitor Serie a **115200 baudios** para verificar la conexión.
 
----
+### Conexión del sensor VL53L0X
+| VL53L0X | NodeMCU |
+|---|---|
+| VIN | 3V3 |
+| GND | GND |
+| SCL | D1 (GPIO5) |
+| SDA | D2 (GPIO4) |
 
-##  Checklist de Entrega
+Esquema completo en [`hardware/esquemas/`](hardware/esquemas/README.md).
 
-### Hardware ✓ (Mateo / Renato)
-- [ ] Esquema del circuito (Fritzing/Wokwi)
-- [ ] BOM completo
-- [ ] Fotos de alta resolución
-
-### Software ✓
-- [✓] Código comentado
-- [✓] Librerías documentadas
-- [✓] Manual de instalación
-
-### Diseño 3D ✓ (Gaspar)
-- [ ] Archivos Fusion 360 (.f3d) con TODOS los componentes
-- [ ] Renders de alta calidad (1+ ángulos)
-- [ ] Planos técnicos
-
-### Testing ✓
-- [ ] Reporte de testing con usuarios (mín. 5)
-- [ ] Evidencias fotográficas/videos
-- [ ] Datos cuantitativos
-
-### Documentación ✓
-- [ ] Reporte final (máx. 15 páginas)
-- [ ] Presentación (10 min)
+### Visualización web
+Abrir en el navegador cualquier archivo de [`firmware/web/`](firmware/src/README.md#interfaces-web). La más simple es `05_web_basica.html`; la versión con mapa del estacionamiento es `09_web_mapa_uai.html` / `11_web_disponibilidad_v10.html`.
 
 ---
 
+## Entregables
+
+| Área | Contenido | Ubicación |
+|---|---|---|
+| Hardware | Esquema (circuito.io), BOM, fotos | [`hardware/`](hardware/README.md) |
+| Firmware | Código comentado, librerías, manual | [`firmware/`](firmware/README.md) |
+| Diseño 3D | Fusion 360 (.f3d/.step), OpenSCAD, STL, renders, planos | [`diseño-3d/`](diseño-3d/README.md) |
+| Testing | Datos cuantitativos, evidencias, reportes | [`testing/`](testing/README.md) |
+| Documentación | Reporte final y presentación | [`docs/`](docs/README.md) |
+| Iteraciones | v1, v2, v3 | [`iteraciones/`](iteraciones/README.md) |
 
 ---
 
-##  Licencia
-Este proyecto es desarrollado como parte del curso TEI201 - Facultad de Ingenieria y Ciencias - Universidad Adolfo Ibañez
+## Licencia
+Proyecto desarrollado para el curso TEI201 — Facultad de Ingeniería y Ciencias — Universidad Adolfo Ibáñez. Distribuido bajo licencia MIT (ver [`LICENSE`](LICENSE)). Fuentes externas declaradas en [`FUENTES.md`](FUENTES.md).

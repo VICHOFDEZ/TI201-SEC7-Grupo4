@@ -25,7 +25,7 @@ Tercera iteración del prototipo del sistema de monitoreo para el estacionamient
 
 ### Hardware
 **Agregado:**
-- Segundo módulo completo de sensado (ESP32 DevKit v1 + sensor de distancia láser ToF VL53L0X).
+- Segundo módulo completo de sensado (NodeMCU ESP8266 + sensor de distancia láser ToF VL53L0X).
 
 **Modificado:**
 - Integración física de los componentes - Razón: preparar el montaje definitivo dentro de la carcasa 3D.
@@ -51,10 +51,10 @@ Tercera iteración del prototipo del sistema de monitoreo para el estacionamient
 
 ## Fotos del Prototipo v3
 
-Incluir en esta carpeta:
-- `v3_dos_sensoresv.jpg`
-- `v3_modelo_3d.png`
-- `v3_web_pruebas.png`
+En la carpeta `v3_fotos/`:
+- `v3_dos_sensores.png`
+- `v3_encapsulado_cerrado.png`
+- `v3_encapsulado_abierto.png`
 
 ---
 
@@ -74,7 +74,7 @@ Incluir en esta carpeta:
 1. **Modo de ahorro de batería (*Deep Sleep*) no resuelto:**
    - Descripción: No se ha logrado implementar correctamente la función para que el sensor/microcontrolador entre en modo reposo y despierte periódicamente sin perder estabilidad en la conexión o en las lecturas.
    - Prioridad: Alta
-   - Plan de acción: Revisar la rutina de *deep sleep* en la ESP32 (despertar por temporizador cada ciertos segundos, medir, enviar a Firebase y volver a dormir) para reducir el consumo energético en operación con batería.
+   - Plan de acción: Revisar la rutina de *deep sleep* en el ESP8266 (despertar por temporizador cada ciertos segundos, medir, enviar a Firebase y volver a dormir) para reducir el consumo energético en operación con batería.
 
 2. **Integración de la interfaz web avanzada:**
    - Descripción: Aunque la web simple de un punto ya arroja pruebas positivas, aún se está evaluando cómo integrar el segundo modelo de web (mapa satelital con 5 pasillos, semáforo y Google Maps) con los datos reales de los sensores.
@@ -109,8 +109,8 @@ Incluir en esta carpeta:
 
 ## Archivos en esta Carpeta
 
-- `v3_codigo.ino` - Código actualizado para los dos sensores
+- `v3_codigo/` - Código de esta iteración (`01_sensor_basico`, `02_prueba_diagnostico`, `03_sensor_avanzado`, `04_sensor_bajo_consumo`, `sensor_wifi_uai`, `sensor_wifi_uai_diagnostico`). La versión más actualizada de cada sketch está en [`firmware/src/`](../../firmware/src/README.md).
 - `v3_web_simple.html` - Página web con mapa de puntos (pruebas positivas)
 - `v3_web_satelital.html` - Propuesta de página web con mapa satelital, 5 pasillos y Google Maps
-- `v3_modelo3d.f3d` - Archivo del modelo 3D del encapsulado
-- `v3_fotos/` - Fotografías de los dos sensores, modelo 3D y capturas de pruebas
+- `v3_fotos/` - Fotografías de los dos sensores y del encapsulado impreso
+- Modelo 3D del encapsulado: ver [`diseño-3d/`](../../diseño-3d/README.md) (`fusion360/modelo_completo_v3.f3d` y `openscad/Version_10.scad`)

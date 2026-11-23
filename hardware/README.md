@@ -6,19 +6,20 @@ Esta carpeta contiene toda la documentación técnica del hardware del proyecto.
 ### 📁 Carpetas
 
 #### `esquemas/`
-Diagramas de circuitos y esquemáticos del sistema
+Diagramas de circuitos y esquemáticos del sistema:
+- `circuito_completo.jpeg` — NodeMCU ESP8266 + VL53L0X + batería 18650 con todas las conexiones
+- `formato_circuito_io.png` — Esquema generado en circuito.io
 
 #### `bom/`
-Bill of Materials (Lista de materiales):
+Bill of Materials (`bom_completo.xlsx`):
 NodeMCU ESP8266
 Sensor de Distancia VL53L0X
 Batería 18650
 Portabatería 18650 con Módulo de Carga
 Cables de conexión
 
-#### `fotos/` 
-- 02_vista_general.jpg
-Fotografías de alta resolución del prototipo ensamblado
+#### `fotos/`
+Fotografías del prototipo (circuito, sensor, encapsulado impreso y montaje). Listado completo en [`fotos/README.md`](fotos/README.md).
 
 ---
 

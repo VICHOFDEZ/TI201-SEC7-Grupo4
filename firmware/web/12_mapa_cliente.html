@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estacionamiento UAI · Disponibilidad</title>
+<style>
+:root{
+  --bg:#f5f7fa; --fg:#0f172a; --muted:#64748b; --card:#ffffff; --line:#e2e8f0;
+  --libre:#16a34a; --ocupado:#dc2626; --sin:#94a3b8; --alerta:#f59e0b;
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1220; --fg:#e2e8f0; --muted:#94a3b8; --card:#111a2b; --line:#1e293b;
+    --libre:#22c55e; --ocupado:#ef4444; --sin:#475569; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);
+  padding:20px max(16px, env(safe-area-inset-left, 0px)) 28px max(16px, env(safe-area-inset-right, 0px))}
+.wrap{max-width:1100px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+h1{font-size:1.4rem;font-weight:700;letter-spacing:-.01em}
+.sub{font-size:.9rem;color:var(--muted);margin-top:3px}
+#estado{font-size:.82rem;color:var(--muted)}
+#estado.bad{color:var(--ocupado)}
+.resumen{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.chip b{display:block;font-size:1.7rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.chip span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.chip.libre b{color:var(--libre)}
+.chip.ocupado b{color:var(--ocupado)}
+.mapa{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.mapa .lienzo{position:relative}
+.mapa img{display:block;width:100%;height:auto}
+.mapa svg{position:absolute;inset:0;width:100%;height:100%}
+.plaza{transition:fill .6s ease, fill-opacity .6s ease}
+.plaza.libre{fill:var(--libre);fill-opacity:.62}
+.plaza.ocupado{fill:var(--ocupado);fill-opacity:.62}
+.plaza.sin{fill:var(--sin);fill-opacity:.12}
+.plaza.alerta{stroke:var(--alerta);stroke-width:2;stroke-dasharray:5 4}
+.leyenda{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:.85rem;color:var(--muted)}
+.leyenda i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:7px;vertical-align:-1px}
+.nota{margin-top:12px;font-size:.78rem;color:var(--muted)}
+@media (max-width:560px){ .resumen{grid-template-columns:1fr 1fr} }
+@media (prefers-reduced-motion:reduce){ .plaza{transition:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>Estacionamiento UAI</h1>
+      <div class="sub">Disponibilidad de plazas en tiempo real</div>
+    </div>
+    <div id="estado">Conectando…</div>
+  </header>
+
+  <section class="resumen">
+    <div class="chip libre"><b id="libres">—</b><span>Libres</span></div>
+    <div class="chip ocupado"><b id="ocupados">—</b><span>Ocupadas</span></div>
+    <div class="chip"><b id="total">—</b><span>Plazas totales</span></div>
+  </section>
+
+  <section class="mapa">
+    <div class="lienzo" id="lienzo">
+      <img id="foto" src="estacionamiento_base.jpg" alt="Vista aérea del estacionamiento">
+      <svg id="svg" preserveAspectRatio="none" aria-label="Mapa de plazas"></svg>
+    </div>
+  </section>
+
+  <div class="leyenda">
+    <span><i style="background:var(--libre)"></i>Libre</span>
+    <span><i style="background:var(--ocupado)"></i>Ocupada</span>
+    <span><i style="background:var(--sin)"></i>Sin información</span>
+  </div>
+  <p class="nota">Las plazas se actualizan solas cada pocos segundos.</p>
+
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN
+   ========================================================= */
+const DATABASE_URL = "https://estacionamiento-uai-default-rtdb.firebaseio.com";
+const INTERVALO_MS = 2000;
+const SIN_SENAL_MS = 10000;
+
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("svg");
+let plazas = [];        // {sensor, el}
+const vistas = new Map();
+
+/* ---------- carga del mapa de plazas (plazas.json, generado por el marcador) ---------- */
+async function cargarPlazas() {
+  const r = await fetch("plazas.json", { cache: "no-store" });
+  if (!r.ok) throw new Error("No se encontró plazas.json");
+  const datos = await r.json();
+  svg.setAttribute("viewBox", `0 0 ${datos.width} ${datos.height}`);
+  datos.plazas.forEach(p => {
+    const el = document.createElementNS(NS, "polygon");
+    el.setAttribute("points", p.pts.map(q => q.join(",")).join(" "));
+    el.setAttribute("class", "plaza sin");
+    const t = document.createElementNS(NS, "title");
+    el.appendChild(t);
+    svg.appendChild(el);
+    plazas.push({ sensor: p.sensor, el, titulo: t });
+  });
+}
+
+/* ---------- actualización desde Firebase ---------- */
+function actualizar(datos) {
+  const ahora = Date.now();
+  let libres = 0, ocupados = 0;
+
+  plazas.forEach(p => {
+    const d = datos ? datos["sensor_" + p.sensor] : null;
+    const estado = d && typeof d === "object" ? String(d.estado || "").toUpperCase() : "";
+    const json = d ? JSON.stringify(d) : "";
+
+    let v = vistas.get(p.sensor);
+    if (!v || v.json !== json) { v = { json, cambio: ahora }; vistas.set(p.sensor, v); }
+    const sinSenal = !!d && (ahora - v.cambio > SIN_SENAL_MS);
+
+    let clase = "sin";
+    if (estado === "LIBRE") { clase = "libre"; libres++; }
+    else if (estado === "OCUPADO") { clase = "ocupado"; ocupados++; }
+    p.el.setAttribute("class", "plaza " + clase + (sinSenal ? " alerta" : ""));
+    p.titulo.textContent = clase === "libre" ? "Libre" : clase === "ocupado" ? "Ocupada" : "Sin información";
+  });
+
+  document.getElementById("libres").textContent = libres;
+  document.getElementById("ocupados").textContent = ocupados;
+  document.getElementById("total").textContent = plazas.length;
+}
+
+async function consultar() {
+  const estadoEl = document.getElementById("estado");
+  try {
+    const r = await fetch(DATABASE_URL + "/.json", { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    actualizar(await r.json());
+    estadoEl.textContent = "Actualizado " + new Date().toLocaleTimeString("es-CL");
+    estadoEl.className = "";
+  } catch (e) {
+    actualizar(null);
+    estadoEl.textContent = "Sin conexión con el sistema";
+    estadoEl.className = "bad";
+  }
+}
+
+/* ---------- inicio ---------- */
+cargarPlazas()
+  .then(() => { consultar(); setInterval(consultar, INTERVALO_MS); })
+  .catch(() => {
+    document.getElementById("estado").textContent = "Falta el archivo de plazas";
+    document.getElementById("estado").className = "bad";
+  });
+</script>
+</body>
+</html>

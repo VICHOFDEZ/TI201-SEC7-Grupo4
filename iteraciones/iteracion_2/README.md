@@ -25,7 +25,7 @@ Segunda versión del prototipo presentada en el Avance #2 del curso. En esta eta
 
 ### Hardware
 **Agregado:**
-- Ningún componente electrónico nuevo (se continuó trabajando con 1 placa ESP32 y 1 sensor VL53L0X).
+- Ningún componente electrónico nuevo (se continuó trabajando con 1 placa NodeMCU ESP8266 y 1 sensor VL53L0X).
 
 **Modificado:**
 - Montaje físico del circuito - Razón: adaptarlo dentro de la maqueta de cartón para simular su posición real en el estacionamiento.
@@ -51,11 +51,11 @@ Segunda versión del prototipo presentada en el Avance #2 del curso. En esta eta
 
 ## Fotos del Prototipo v2
 
-Incluir en esta carpeta:
-- `v2_prototipo_carton.jpg`
-- `v2_circuito_integrado.jpg`
-- `v2_presentacion_avance2.jpg`
-*Aclaración: No usamos una presentación como tal para exponer en esta evaluación dos.
+En la carpeta `v2_fotos/`:
+- `v2_prototipo_carton.png`
+- `v2_circuito_integrado.png`
+
+*Aclaración: No usamos una presentación como tal para exponer en esta evaluación dos, por eso no hay foto de presentación.*
 ---
 
 ## Resultados de Testing
@@ -135,6 +135,6 @@ Incluir en esta carpeta:
 
 ## Archivos en esta Carpeta
 
-- `v2_codigo.ino` - Código del microcontrolador utilizado en el Avance #2
+- `v2_codigo/01_sensor_basico/01_sensor_basico.ino` y `v2_codigo/02_prueba_diagnostico/02_prueba_diagnostico.ino` - Código del microcontrolador utilizado en el Avance #2
 - `v2_web.html` - Interfaz web básica utilizada en la presentación
 - `v2_fotos/` - Fotografías del prototipo de cartón y pruebas de la presentación

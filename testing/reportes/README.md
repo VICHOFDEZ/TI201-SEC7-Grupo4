@@ -57,10 +57,10 @@ Este directorio contiene los documentos finales (en formato PDF) que sintetizan 
 ### `analisis_impacto_ods_11.pdf`
 Documento enfocado exclusivamente en la proyección ambiental y de bienestar estudiantil si el sistema se implementa en el 100% de los estacionamientos de la UAI.
 
-### `feedback_usuarios.pdf`
+### `feedback_usuarios.pdf` — ⚠️ PENDIENTE DE SUBIR
 Compilación de comentarios, sugerencias de interfaz y validación de la experiencia de usuario (UX) del dashboard web.
 
-### `comparativa_iteraciones.pdf`
+### `comparativa_iteraciones.pdf` — ⚠️ PENDIENTE DE SUBIR
 Análisis técnico de la evolución del desempeño del código:
 - **v1 Básico:** Alto consumo, latencia media.
 - **v2 Avanzado:** Filtros por software, sin falsos positivos.

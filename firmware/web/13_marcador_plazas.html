@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marcador de plazas</title>
+<style>
+:root{--fg:#111827;--muted:#6b7280;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--accent:#2563eb;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--fg);padding:16px}
+h1{font-size:1.15rem;margin:0 0 4px}
+p.ayuda{color:var(--muted);font-size:.86rem;margin:0 0 12px;line-height:1.5}
+.barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+button{font:inherit;font-size:.86rem;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.primario{background:var(--accent);border-color:var(--accent);color:#fff}
+button.activo{outline:2px solid var(--accent)}
+input[type=number]{width:90px;font:inherit;padding:7px 9px;border-radius:10px;border:1px solid var(--line)}
+.estado{font-size:.85rem;color:var(--muted);margin-left:auto}
+.lienzo{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;user-select:none}
+.lienzo img{display:block;width:100%;height:auto}
+.lienzo svg{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+.poli{fill:rgba(37,99,235,.18);stroke:#2563eb;stroke-width:2;vector-effect:non-scaling-stroke}
+.poli.sel{fill:rgba(245,158,11,.35);stroke:#d97706}
+.etq{font-size:14px;font-weight:700;fill:#fff;stroke:#111827;stroke-width:3;paint-order:stroke;text-anchor:middle;dominant-baseline:middle}
+.punto{fill:#dc2626}
+.guia{fill:none;stroke:#dc2626;stroke-width:2;stroke-dasharray:6 4}
+.oculto{display:none}
+.lista{margin-top:12px;font-size:.84rem;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+
+<h1>Marcador de plazas</h1>
+<p class="ayuda">
+  <b>Marcar:</b> haz clic en las 4 esquinas de una plaza, en orden (por ejemplo, arriba-izquierda, arriba-derecha, abajo-derecha, abajo-izquierda). Al cuarto clic la plaza queda guardada.<br>
+  <b>Seleccionar:</b> haz clic sobre una plaza para elegirla y escribe su número de sensor (el mismo que tiene en Firebase, <code>sensor_N</code>).
+</p>
+
+<div class="barra">
+  <button id="bMarcar" class="primario activo">Marcar plazas</button>
+  <button id="bSel">Seleccionar</button>
+  <label>Sensor: <input id="num" type="number" min="1" step="1"></label>
+  <button id="bAplicar">Asignar a la seleccionada</button>
+  <button id="bDeshacer">Deshacer</button>
+  <button id="bBorrar">Borrar todo</button>
+  <button id="bExportar" class="primario">Exportar plazas.json</button>
+  <span class="estado" id="conteo">0 plazas</span>
+</div>
+
+<div class="lienzo" id="lienzo">
+  <img id="foto" src="estacionamiento_base.jpg" alt="Foto aérea del estacionamiento">
+  <svg id="svg" viewBox="0 0 1200 1800" preserveAspectRatio="none"></svg>
+</div>
+
+<div class="lista" id="lista"></div>
+
+<script>
+const CLAVE = "marcador-plazas-v1";
+const svg = document.getElementById("svg");
+const NS = "http://www.w3.org/2000/svg";
+const foto = document.getElementById("foto");
+let W = 1200, H = 1800;
+let plazas = [];        // {sensor, pts:[[x,y],...]}
+let puntos = [];        // puntos de la plaza en curso
+let modo = "marcar";
+let seleccion = -1;
+
+/* --------- guardado local (por si se cierra la pestaña) --------- */
+function guardar() {
+  try { localStorage.setItem(CLAVE, JSON.stringify({ plazas })); } catch (e) {}
+}
+function cargar() {
+  try {
+    const v = JSON.parse(localStorage.getItem(CLAVE) || "null");
+    if (v && Array.isArray(v.plazas)) plazas = v.plazas;
+  } catch (e) {}
+}
+
+/* --------- coordenadas de la imagen (independientes del zoom) --------- */
+function aImagen(e) {
+  const r = svg.getBoundingClientRect();
+  return [
+    Math.round((e.clientX - r.left) / r.width * W),
+    Math.round((e.clientY - r.top) / r.height * H)
+  ];
+}
+
+/* --------- dibujo --------- */
+function dibujar() {
+  svg.innerHTML = "";
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  plazas.forEach((p, i) => {
+    const poli = document.createElementNS(NS, "polygon");
+    poli.setAttribute("points", p.pts.map(q => q.join(",")).join(" "));
+    poli.setAttribute("class", "poli" + (i === seleccion ? " sel" : ""));
+    poli.dataset.i = i;
+    svg.appendChild(poli);
+
+    const cx = p.pts.reduce((s, q) => s + q[0], 0) / p.pts.length;
+    const cy = p.pts.reduce((s, q) => s + q[1], 0) / p.pts.length;
+    const t = document.createElementNS(NS, "text");
+    t.setAttribute("x", cx); t.setAttribute("y", cy);
+    t.setAttribute("class", "etq");
+    t.textContent = p.sensor ?? "?";
+    svg.appendChild(t);
+  });
+
+  if (puntos.length) {
+    const guia = document.createElementNS(NS, "polyline");
+    guia.setAttribute("points", puntos.map(q => q.join(",")).join(" "));
+    guia.setAttribute("class", "guia");
+    svg.appendChild(guia);
+    puntos.forEach(q => {
+      const c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", q[0]); c.setAttribute("cy", q[1]);
+      c.setAttribute("r", 6); c.setAttribute("class", "punto");
+      svg.appendChild(c);
+    });
+  }
+
+  document.getElementById("conteo").textContent =
+    `${plazas.length} plaza${plazas.length === 1 ? "" : "s"}`;
+  const faltan = plazas.filter(p => !p.sensor).length;
+  document.getElementById("lista").textContent =
+    faltan ? `${faltan} plaza(s) sin número de sensor.` : "";
+  guardar();
+}
+
+/* --------- eventos --------- */
+svg.addEventListener("click", e => {
+  const p = aImagen(e);
+  if (modo === "marcar") {
+    puntos.push(p);
+    if (puntos.length === 4) {
+      const sig = 1 + Math.max(0, ...plazas.map(z => Number(z.sensor) || 0));
+      plazas.push({ sensor: sig, pts: puntos });
+      puntos = [];
+    }
+    dibujar();
+  } else {
+    const el = e.target.closest("polygon");
+    seleccion = el ? Number(el.dataset.i) : -1;
+    if (seleccion >= 0) document.getElementById("num").value = plazas[seleccion].sensor ?? "";
+    dibujar();
+  }
+});
+
+function fijarModo(m) {
+  modo = m;
+  document.getElementById("bMarcar").classList.toggle("activo", m === "marcar");
+  document.getElementById("bSel").classList.toggle("activo", m === "seleccionar");
+  puntos = [];
+  dibujar();
+}
+document.getElementById("bMarcar").onclick = () => fijarModo("marcar");
+document.getElementById("bSel").onclick = () => fijarModo("seleccionar");
+
+document.getElementById("bAplicar").onclick = () => {
+  const v = parseInt(document.getElementById("num").value, 10);
+  if (seleccion < 0) { alert("Primero selecciona una plaza."); return; }
+  if (!isFinite(v) || v < 1) { alert("Escribe un número de sensor válido."); return; }
+  plazas[seleccion].sensor = v;
+  dibujar();
+};
+
+document.getElementById("bDeshacer").onclick = () => {
+  if (puntos.length) puntos.pop(); else plazas.pop();
+  seleccion = -1;
+  dibujar();
+};
+
+document.getElementById("bBorrar").onclick = () => {
+  if (confirm("¿Borrar todas las plazas marcadas?")) { plazas = []; puntos = []; seleccion = -1; dibujar(); }
+};
+
+document.getElementById("bExportar").onclick = () => {
+  const datos = { width: W, height: H, plazas: plazas.map(p => ({ sensor: p.sensor, pts: p.pts })) };
+  const blob = new Blob([JSON.stringify(datos, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "plazas.json";
+  a.click();
+};
+
+/* --------- arranque: tamaño real de la foto --------- */
+foto.addEventListener("load", () => {
+  W = foto.naturalWidth; H = foto.naturalHeight;
+  svg.setAttribute("preserveAspectRatio", "none");
+  dibujar();
+});
+cargar();
+dibujar();
+</script>
+</body>
+</html>

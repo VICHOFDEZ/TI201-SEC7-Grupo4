@@ -24,7 +24,7 @@ Primera versión del prototipo del sistema de monitoreo para el estacionamiento 
 ## Componentes Utilizados
 
 ### Hardware
-- Microcontrolador: ESP32 DevKit v1 (con módulo WiFi integrado)
+- Microcontrolador: NodeMCU ESP8266 (ESP-12E, con WiFi integrado)
 - Sensores:
   - Sensor 1 (`/sensor_1`): Sensor de distancia láser ToF VL53L0X
   - Sensor 2 (`/sensor_2`): Sin uso
@@ -42,10 +42,11 @@ Primera versión del prototipo del sistema de monitoreo para el estacionamiento 
 
 ## Fotos del Prototipo
 
-Incluir en esta carpeta:
-- `v1_circuito_protoboard.jpg`
-- `v1_vista_general.jpg`
-- `v1_detalle_conexiones.jpg`
+En la carpeta `v1_fotos/`:
+- `v1_circuito_protoboard.png`
+- `v1_vista_general.png`
+- `v1_detalle_conexiones.png`
+- `v1_detalle_conexiones_02.png`
 
 ---
 
@@ -100,6 +101,6 @@ Incluir en esta carpeta:
 
 ## Archivos en esta Carpeta
 
-- `v1_codigo.ino` - Código inicial del microcontrolador
+- `v1_codigo/01_sensor_basico/01_sensor_basico.ino` - Código inicial del microcontrolador
 - `v1_web.html` - Primera versión de la interfaz web
 - `v1_fotos/` - Fotografías del montaje en protoboard

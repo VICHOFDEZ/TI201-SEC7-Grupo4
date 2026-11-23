@@ -7,9 +7,11 @@
 
 ### Fotografías
 
+> ⚠️ **Pendiente de subir:** las fotos de las sesiones con usuarios todavía no están en esta carpeta. Al subirlas, usar los nombres indicados abajo. Las fotos del hardware y del encapsulado están en [`../../hardware/fotos/`](../../hardware/fotos/README.md).
+
 #### Sesiones de Simulación
-- `sesion_simulada_01.jpg`
-- `sesion_simulada_02.jpg`
+- `sesion_simulada_01.jpg` (pendiente)
+- `sesion_simulada_02.jpg` (pendiente)
 
 **Requisitos documentados en las fotos:**
 - Muestran la interacción de los usuarios acercando la mano al sensor.
@@ -17,8 +19,7 @@
 - Rostros difuminados o ángulos cerrados en caso de no contar con consentimiento expreso.
 
 #### Instalación y Hardware
-- `instalacion_gabinete_3d.jpg`
-- `conexion_hardware.jpg`
+- Ver `hardware/fotos/05_encapsulado_cerrado.jpg`, `06_encapsulado_abierto.jpg` y `07_montaje_nodemcu_en_base.jpeg`
 
 **Requisitos documentados:**
 - Prototipo ensamblado con su ESP8266 y sensor láser visible.
@@ -51,15 +52,10 @@
 
 ```text
 evidencias/
-├── fotos/
-│   ├── sesiones_simuladas/
-│   │   ├── sesion_simulada_U01_20261025.jpg
-│   │   └── sesion_simulada_U02_20261025.jpg
-│   └── hardware/
-│       ├── instalacion_gabinete_3d.jpg
-│       └── ensamble_interno.jpg
-└── videos/
-    └── demo_simulacion_mano_20261025.mp4
+├── README.md
+├── 07_contexto_uso.mp4          # Video de demostración (simulación con la mano)
+├── sesion_simulada_01.jpg       # (pendiente)
+└── sesion_simulada_02.jpg       # (pendiente)
 ```
 
 ---

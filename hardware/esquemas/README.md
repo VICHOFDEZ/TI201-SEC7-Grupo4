@@ -3,9 +3,9 @@
 ## Archivos Requeridos
 
 Ninguno de las dos plataformas permite armar un circuito con sensor VL53L0X por lo cual debimos hacerlo en otra plataforma llamada circuito.io
-### Formato circuito.io
-Firmwere(1).ion 
-Formato.circuito.jpg
+### Archivos
+- `formato_circuito_io.png` — Esquema exportado desde circuito.io
+- `circuito_completo.jpeg` — Diagrama final: porta batería 18650 con salida USB 5V → NodeMCU ESP8266 → sensor VL53L0X (VIN→3V3, GND→GND, SCL→D1, SDA→D2)
 
 
 ---
