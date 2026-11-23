@@ -11,7 +11,9 @@ El proyecto no utiliza un único `main.ino`, sino que está estructurado en vers
 - `03_sensor_avanzado/03_sensor_avanzado.ino`: Versión con filtro anti-falsas alarmas, latido de red y envío condicional (para WiFi estándar).
 - `04_sensor_bajo_consumo/04_sensor_bajo_consumo.ino`: Versión optimizada con Deep Sleep para funcionar con baterías (requiere puente D0–RST).
 - `sensor_wifi_uai/sensor_wifi_uai.ino`: Código final para conectar a la red de la universidad ("UAI Alumnos") mediante WPA2-Enterprise.
-- `sensor_wifi_uai_diagnostico/sensor_wifi_uai_diagnostico.ino`: Variante del sensor avanzado usada en pruebas con hotspot de celular.
+- `sensor_wifi_uai_diagnostico/sensor_wifi_uai_diagnostico.ino`: Variante del Paso 3 usada en pruebas con el hotspot del celular (mismo código que `03_sensor_avanzado`, solo cambia la red WiFi).
+
+Las versiones anteriores del firmware (Versión 1 `v1_original.ino` y Versión 2 `v2_mejorado.ino`) están en `iteraciones/iteracion_1/` e `iteraciones/iteracion_2/`.
 
 > Las credenciales (`TU_WIFI`, `TU_CLAVE_WIFI`, `TU_FIREBASE_SECRET`, `usuario@alumnos.uai.cl`) están reemplazadas por marcadores. Completarlas localmente antes de subir el código a la placa y **no** hacer commit de las claves reales.
 

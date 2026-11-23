@@ -39,6 +39,7 @@ Segunda versión del prototipo presentada en el Avance #2 del curso. En esta eta
 
 **Optimizaciones:**
 - Validación continua del umbral de detección a 50 cm.
+- Versión 2 del firmware (`v2_mejorado.ino`): Deep Sleep con la radio apagada al despertar y espera máxima de 15 s para el WiFi, para reducir el consumo de batería.
 
 **Bugs corregidos:**
 - Ninguno mayor en software; se priorizó la validación de la presentación y el prototipo físico.
@@ -135,6 +136,8 @@ En la carpeta `v2_fotos/`:
 
 ## Archivos en esta Carpeta
 
-- `v2_codigo/01_sensor_basico/01_sensor_basico.ino` y `v2_codigo/02_prueba_diagnostico/02_prueba_diagnostico.ino` - Código del microcontrolador utilizado en el Avance #2
+- `v2_codigo/v2_mejorado/v2_mejorado.ino` - **Versión 2 (mejorada)**: Deep Sleep optimizado (radio apagada al despertar, WiFi no persistente, espera máxima de 15 s para conectar)
+- `v2_codigo/01_sensor_basico/` y `v2_codigo/02_prueba_diagnostico/` - Código de prueba y diagnóstico utilizado en el Avance #2
 - `v2_web.html` - Interfaz web básica utilizada en la presentación
+- `v2_web_dev_dashboard.html` - Segunda página web: consola para el administrador (estado, datos crudos de Firebase y registro de eventos)
 - `v2_fotos/` - Fotografías del prototipo de cartón y pruebas de la presentación

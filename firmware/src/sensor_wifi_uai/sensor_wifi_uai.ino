@@ -1,13 +1,17 @@
 /*
  * ====================================================================
- *  ESTACIONAMIENTO UAI  -  Versión 2 : SENSOR AVANZADO (SIN DEEP SLEEP)
+ *  ESTACIONAMIENTO UAI  -  VERSIÓN FINAL: SENSOR WIFI UAI (WPA2-ENTERPRISE)
  * ====================================================================
- *  ¿Qué mejora respecto a la versión 1 (sensor básico)?
+ *  Es el Paso 3 (sensor avanzado) adaptado para conectarse a la red
+ *  de la universidad "UAI Alumnos", que pide usuario y contraseña
+ *  (WPA2-Enterprise). No usa Deep Sleep.
+ *
+ *  ¿Qué mejora respecto al Paso 1 (sensor básico)?
  *
  *   1. FILTRO ANTI-FALSAS-ALARMAS
  *      Una persona que pasa caminando ya no cambia el estado. El
  *      cambio solo se confirma si se repite varias lecturas seguidas
- *      (3 para OCUPADO, 4 para LIBRE).
+ *      (4 para OCUPADO, 3 para LIBRE).
  *
  *   2. ENVÍA MÁS DATOS A LA PÁGINA WEB
  *      Además del estado, manda: distancia medida, calidad de la señal
@@ -26,8 +30,10 @@
  *      Encendido = OCUPADO | Apagado = LIBRE | Parpadeando = conectando.
  *      (Sirve para mostrar el estado aunque no se vea la pantalla.)
  *
- *  Funciona con las 3 páginas web. La más completa es la
- *  07_web_presentacion.html.
+ *   6. CONEXIÓN WPA2-ENTERPRISE a la red "UAI Alumnos".
+ *
+ *  Funciona con las páginas web de firmware/web/. La más completa
+ *  es la 07_web_presentacion.html.
  *
  *  Conexión del sensor VL53L0X a la placa:
  *     VIN -> 3V3
@@ -204,7 +210,7 @@ void publicar() {
 void setup() {
   Serial.begin(115200);
   delay(500);
-  Serial.println("\n=== Estacionamiento UAI - Sensor avanzado ===");
+  Serial.println("\n=== Estacionamiento UAI - Sensor WiFi UAI ===");
 
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);         // LED apagado al inicio

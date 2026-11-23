@@ -1,6 +1,29 @@
 /*
  * ====================================================================
- *  ESTACIONAMIENTO UAI  -  Versión 2 : SENSOR AVANZADO (SIN DEEP SLEEP)
+ *  ESTACIONAMIENTO UAI  -  VARIANTE DEL PASO 3: PRUEBAS CON HOTSPOT DEL CELULAR
+ * ====================================================================
+ *  Mismo código que 03_sensor_avanzado.ino; solo cambia la red WiFi
+ *  configurada (hotspot del celular). No incluye WPA2-Enterprise.
+ *
+ *  Igual que el Paso 3, mejora respecto al Paso 1 (sensor básico):
+ *
+ *   1. FILTRO ANTI-FALSAS-ALARMAS: el cambio solo se confirma si se
+ *      repite varias lecturas seguidas (4 para OCUPADO, 3 para LIBRE).
+ *   2. ENVÍA MÁS DATOS A LA WEB: distancia, señal WiFi, tiempo
+ *      encendido y un "latido" cada 2 s para saber si sigue vivo.
+ *   3. PUBLICA AL INSTANTE cuando el estado cambia.
+ *   4. SE RECUPERA SOLO si se cae el WiFi.
+ *   5. LED DE LA PLACA: encendido = OCUPADO, apagado = LIBRE,
+ *      parpadeando = conectando.
+ *
+ *  Usa una red WiFi normal (por ejemplo, el hotspot del celular).
+ *  Para la red de la universidad usar sensor_wifi_uai.ino.
+ *
+ *  Conexión del sensor VL53L0X a la placa:
+ *     VIN -> 3V3
+ *     GND -> GND
+ *     SDA -> D2
+ *     SCL -> D1
  * ====================================================================
  */
 
@@ -154,7 +177,7 @@ void publicar() {
 void setup() {
   Serial.begin(115200);
   delay(500);
-  Serial.println("\n=== Estacionamiento UAI - Sensor avanzado ===");
+  Serial.println("\n=== Estacionamiento UAI - Sensor avanzado (hotspot) ===");
 
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);         

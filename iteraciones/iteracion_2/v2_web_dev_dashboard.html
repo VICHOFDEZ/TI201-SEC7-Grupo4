@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dev Console - Sensor UAI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e1e; color: #e0e0e0; margin: 0; padding: 20px; }
+        .dashboard { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .panel { background: #2d2d2d; padding: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        h2 { margin-top: 0; color: #4DA8DA; font-size: 1.2em; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        
+        #indicador { 
+            width: 100%; height: 120px; border-radius: 6px; display: flex; 
+            align-items: center; justify-content: center; font-size: 2em; 
+            font-weight: bold; background: #424242; transition: background-color 0.4s ease; 
+            margin-bottom: 20px; letter-spacing: 2px;
+        }
+        
+        .raw-data { background: #121212; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; color: #a6e22e; font-size: 0.95em; overflow-x: auto; }
+        
+        .log-container { height: 500px; overflow-y: auto; background: #121212; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; }
+        .log-entry { margin-bottom: 8px; border-bottom: 1px dashed #333; padding-bottom: 8px; }
+        .timestamp { color: #888; margin-right: 12px; }
+        .highlight { color: #ffd700; }
+    </style>
+    <!-- SDK de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Panel Izquierdo: Estado y Raw Data -->
+        <div class="panel">
+            <h2>Monitor de Estado</h2>
+            <div id="indicador">ESPERANDO...</div>
+            
+            <h2>Datos Crudos (Firebase)</h2>
+            <pre class="raw-data" id="rawData">{}</pre>
+        </div>
+
+        <!-- Panel Derecho: Log Histórico -->
+        <div class="panel">
+            <h2>Consola de Eventos (Timestamps)</h2>
+            <div class="log-container" id="eventLog">
+                <!-- Se inyectan los logs mediante JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. REEMPLAZA CON TUS CREDENCIALES DE FIREBASE
+        const firebaseConfig = {
+            authDomain: "estacionamiento-uai.firebaseapp.com",
+            databaseURL: "https://estacionamiento-uai-default-rtdb.firebaseio.com",
+            projectId: "estacionamiento-uai",
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const sensorRef = database.ref('/sensor_1'); // Escuchamos el nodo completo del sensor
+
+        // Referencias al DOM
+        const indicador = document.getElementById('indicador');
+        const eventLog = document.getElementById('eventLog');
+        const rawData = document.getElementById('rawData');
+
+        let ultimoEstado = null;
+
+        // Función para inyectar eventos en la consola
+        function agregarLog(mensaje, color = "#e0e0e0") {
+            const now = new Date();
+            const time = now.toLocaleTimeString() + '.' + String(now.getMilliseconds()).padStart(3, '0');
+            const logHTML = `<div class="log-entry"><span class="timestamp">[${time}]</span> <span style="color: ${color}">${mensaje}</span></div>`;
+            eventLog.innerHTML = logHTML + eventLog.innerHTML; // Inserta arriba
+        }
+
+        agregarLog("Dashboard inicializado. Conectando al servidor de la universidad...", "#4DA8DA");
+
+        // 2. Listener en Tiempo Real
+        sensorRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            
+            if (!data) {
+                agregarLog("ADVERTENCIA: Nodo /sensor_1 no existe en la base de datos.", "#f44336");
+                return;
+            }
+
+            // A. Volcar el JSON crudo en la interfaz
+            rawData.innerText = JSON.stringify(data, null, 2);
+
+            const estadoActual = data.estado;
+
+            // B. Procesar el cambio de estado
+            if (estadoActual !== ultimoEstado) {
+                indicador.innerText = estadoActual;
+                
+                if (estadoActual === "LIBRE") {
+                    indicador.style.backgroundColor = "#2e7d32"; 
+                    agregarLog(`Señal recibida. Transición detectada: <span class="highlight">LIBRE</span>`, "#81c784");
+                } else if (estadoActual === "OCUPADO") {
+                    indicador.style.backgroundColor = "#c62828"; 
+                    agregarLog(`Señal recibida. Transición detectada: <span class="highlight">OCUPADO</span>`, "#e57373");
+                }
+                
+                ultimoEstado = estadoActual;
+            } else {
+                // Si Firebase emite un valor pero el estado es el mismo, significa que el ESP8266
+                // despertó y reescribió el mismo dato (útil para auditar si el Deep Sleep falla)
+                agregarLog("Ping recibido. El estado se mantiene sin cambios.", "#757575");
+            }
+        });
+    </script>
+</body>
+</html>

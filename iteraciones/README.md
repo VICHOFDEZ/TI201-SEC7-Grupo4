@@ -11,13 +11,14 @@ Esta carpeta documenta la evolución del prototipo a través de las diferentes v
 ```
 iteraciones/
 ├── iteracion_1/    # Concepto inicial - Prototipo alpha (v1.0)
-│   ├── v1_codigo/  #   01_sensor_basico
+│   ├── v1_codigo/  #   v1_original (Versión 1), 01_sensor_basico
 │   ├── v1_fotos/
 │   └── v1_web.html
 ├── iteracion_2/    # Primera mejora - Avance #2 (v2.0)
-│   ├── v2_codigo/  #   01_sensor_basico, 02_prueba_diagnostico
+│   ├── v2_codigo/  #   v2_mejorado (Versión 2), 01_sensor_basico, 02_prueba_diagnostico
 │   ├── v2_fotos/
-│   └── v2_web.html
+│   ├── v2_web.html
+│   └── v2_web_dev_dashboard.html  # Consola del administrador
 └── iteracion_3/    # Integración multi-sensor y modelo 3D - Avance #3 (v3.0)
     ├── v3_codigo/  #   01 a 04 + sensor_wifi_uai (+ diagnóstico)
     ├── v3_fotos/

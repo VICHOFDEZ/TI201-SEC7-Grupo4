@@ -36,7 +36,7 @@ Primera versión del prototipo del sistema de monitoreo para el estacionamiento 
 ### Software
 - IDE: Arduino IDE y Visual Studio Code
 - Librerías: `WiFi.h`, librería de conexión a Firebase Realtime Database, librería del sensor de distancia y Firebase JS SDK v8.10.1
-- Versión código: v1.0
+- Versión código: v1.0 (`v1_original.ino`)
 
 ---
 
@@ -101,6 +101,7 @@ En la carpeta `v1_fotos/`:
 
 ## Archivos en esta Carpeta
 
-- `v1_codigo/01_sensor_basico/01_sensor_basico.ino` - Código inicial del microcontrolador
-- `v1_web.html` - Primera versión de la interfaz web
+- `v1_codigo/v1_original/v1_original.ino` - **Versión 1 (original)**: primer código del microcontrolador (Deep Sleep + envío a Firebase solo cuando cambia el estado)
+- `v1_codigo/01_sensor_basico/01_sensor_basico.ino` - Versión simple siempre encendida, usada para comprobar sensor, WiFi y Firebase
+- `v1_web.html` - Primera página web del proyecto (monitor del estado LIBRE/OCUPADO)
 - `v1_fotos/` - Fotografías del montaje en protoboard
