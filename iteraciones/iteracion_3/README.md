@@ -52,7 +52,7 @@ Tercera iteración del prototipo del sistema de monitoreo para el estacionamient
 ## Fotos del Prototipo v3
 
 Incluir en esta carpeta:
-- `v3_dos_sensores.jpg`
+- `v3_dos_sensoresv.jpg`
 - `v3_modelo_3d.png`
 - `v3_web_pruebas.png`
 

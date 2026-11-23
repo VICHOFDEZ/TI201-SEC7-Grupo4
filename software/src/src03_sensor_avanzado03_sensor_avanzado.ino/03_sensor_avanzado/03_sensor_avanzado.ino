@@ -12,8 +12,8 @@
 
 // -------------------- DATOS DE CONEXIÓN (EDITAR) --------------------
 // IMPORTANTE: Asegúrate de usar una red normal, como el hotspot de tu celular
-#define WIFI_SSID      "Galaxy S22 EF1A"  
-#define WIFI_PASSWORD  "Mateo123" 
+#define WIFI_SSID      "Casa 23"  
+#define WIFI_PASSWORD  "cavitrma2021" 
 #define FIREBASE_HOST  "estacionamiento-uai-default-rtdb.firebaseio.com"  
 #define FIREBASE_AUTH  "eENfltqnIqbYBDkdx2N3JuyC5FqohPTF8qhY7KZv"        
 

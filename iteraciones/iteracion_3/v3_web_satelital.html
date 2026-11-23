@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<!--
+  ====================================================================
+   ESTACIONAMIENTO UAI · SECTOR GIMNASIO (5 PASILLOS CURVOS + MAPS)
+  ====================================================================
+   - 5 pasillos de estudiantes con polígonos curvos calibrados sobre
+     vista satelital real (Esri World Imagery).
+   - Semáforo automático por pasillo (Verde / Amarillo / Rojo).
+   - Selector de destino: el estudiante elige cualquier espacio libre
+     o pasillo y abre Google Maps directo a esas coordenadas exactas.
+   - Modo Demo para probar sin hardware y Calibrar GPS para ajustar
+     pines arrastrándolos sobre el satélite.
+  ====================================================================
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estacionamiento UAI · Sector Gimnasio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🅿️</text></svg>">
+
+<!-- Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root{
+  --bg:#070b16;
+  --card:rgba(255,255,255,.045);
+  --card-hover:rgba(255,255,255,.08);
+  --line:rgba(255,255,255,.09);
+  --txt:#e8edf7;
+  --muted:#8b97b1;
+  --accent:#38bdf8;
+  --libre:#22c55e;
+  --medio:#f59e0b;
+  --lleno:#ef4444;
+  --espera:#64748b;
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:18px 18px 28px}
+
+/* Resplandor ambiental */
+.glow{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .8s;z-index:0}
+.glow.espera {background:radial-gradient(900px 460px at 30% -10%,rgba(100,116,139,.18),transparent 60%)}
+.glow.libres {background:radial-gradient(900px 460px at 30% -10%,rgba(34,197,94,.20),transparent 60%)}
+.glow.medio  {background:radial-gradient(900px 460px at 30% -10%,rgba(245,158,11,.20),transparent 60%)}
+.glow.lleno  {background:radial-gradient(900px 460px at 30% -10%,rgba(239,68,68,.20),transparent 60%)}
+body[data-resumen="espera"] .glow.espera,
+body[data-resumen="libres"] .glow.libres,
+body[data-resumen="medio"]  .glow.medio,
+body[data-resumen="lleno"]  .glow.lleno{opacity:1}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;
+  padding:16px 18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+
+/* Encabezado */
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:1.35rem;
+  background:linear-gradient(135deg,#38bdf8,#6366f1);box-shadow:0 6px 20px -4px rgba(99,102,241,.55)}
+h1{font-size:1.25rem;font-weight:700}
+.brand p{font-size:.8rem;color:var(--muted)}
+.top-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.pill{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;
+  background:var(--card);border:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--espera)}
+.pill.ok{color:#bbf7d0}   .pill.ok i{background:var(--libre);box-shadow:0 0 8px var(--libre)}
+.pill.warn{color:#fde68a} .pill.warn i{background:var(--medio);box-shadow:0 0 8px var(--medio)}
+.pill.bad{color:#fecaca}  .pill.bad i{background:var(--lleno);box-shadow:0 0 8px var(--lleno)}
+
+.btn{cursor:pointer;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--txt);
+  padding:8px 13px;border-radius:10px;font-size:.82rem;font-weight:600;transition:.2s;
+  display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn:hover{background:rgba(255,255,255,.14)}
+.btn.maps{background:rgba(56,189,248,.18);border-color:rgba(56,189,248,.55);color:#bae6fd}
+.btn.maps:hover{background:rgba(56,189,248,.32)}
+.btn.activo{background:rgba(56,189,248,.22);border-color:rgba(56,189,248,.6);color:#7dd3fc}
+
+/* Resumen y selector de destino */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.hero-left small{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.hero-num{font-size:clamp(2rem,5vw,3rem);font-weight:800;line-height:1.08;margin-top:2px;font-variant-numeric:tabular-nums}
+.hero-num span{font-size:1rem;font-weight:500;color:var(--muted);margin-left:8px}
+.hero-sub{font-size:.92rem;font-weight:600;margin-top:2px;color:var(--muted)}
+body[data-resumen="libres"] .hero-sub{color:#86efac}
+body[data-resumen="medio"]  .hero-sub{color:#fde68a}
+body[data-resumen="lleno"]  .hero-sub{color:#fca5a5}
+
+.destino-box{display:flex;flex-direction:column;gap:8px;min-width:280px;flex:1;max-width:460px}
+.destino-box label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.destino-row{display:flex;gap:8px;flex-wrap:wrap}
+.destino-select{
+  flex:1;min-width:180px;background:#0f172a;color:var(--txt);border:1px solid var(--line);
+  border-radius:10px;padding:8px 10px;font-size:.82rem;font-family:var(--font);outline:none
+}
+.destino-select:focus{border-color:var(--accent)}
+
+/* 5 Tarjetas de Pasillos */
+.zonas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:10px;margin-bottom:14px}
+.zona-card{cursor:pointer;position:relative;padding:13px 15px;border-radius:16px;
+  background:var(--card);border:1px solid var(--line);transition:transform .15s,background .2s,border-color .4s;
+  display:flex;flex-direction:column;gap:10px}
+.zona-card:hover{background:var(--card-hover);transform:translateY(-2px)}
+.zona-card.seleccionada{outline:2px solid var(--accent);background:rgba(56,189,248,.08)}
+.zona-card::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--zc,var(--espera))}
+
+.zona-card[data-nivel="libre"]{--zc:var(--libre);border-color:rgba(34,197,94,.35)}
+.zona-card[data-nivel="medio"]{--zc:var(--medio);border-color:rgba(245,158,11,.35)}
+.zona-card[data-nivel="lleno"]{--zc:var(--lleno);border-color:rgba(239,68,68,.35)}
+
+.zona-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.zona-info b{display:block;font-size:.9rem;font-weight:700}
+.zona-info span{font-size:.74rem;color:var(--muted)}
+.zona-badge{text-align:right;font-variant-numeric:tabular-nums}
+.zona-badge strong{display:block;font-size:1.25rem;line-height:1;color:var(--zc,var(--txt))}
+.zona-badge small{font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+
+.zona-maps{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  padding:5px 8px;border-radius:8px;font-size:.74rem;font-weight:600;
+  color:#bae6fd;background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.32);
+  text-decoration:none;transition:.2s
+}
+.zona-maps:hover{background:rgba(56,189,248,.26)}
+
+/* Mapa satelital */
+.map-card{margin-bottom:14px}
+.map-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.map-head h2{font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.map-legend{display:flex;gap:12px;font-size:.76rem;color:var(--muted);flex-wrap:wrap;align-items:center}
+.map-legend span{display:inline-flex;align-items:center;gap:5px}
+.map-legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+.calibrar-bar{display:none;margin-bottom:10px;padding:9px 12px;border-radius:10px;font-size:.8rem;
+  background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.4);color:#bae6fd;line-height:1.45}
+.calibrar-bar.on{display:block}
+.calibrar-bar code{background:rgba(0,0,0,.4);padding:2px 6px;border-radius:6px;color:#fff}
+
+#mapa{height:560px;width:100%;border-radius:14px;border:1px solid var(--line);z-index:1;background:#0b1120}
+
+/* Pines de sensores */
+.pin{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  font-weight:800;font-size:.74rem;color:#070b16;background:var(--espera);
+  border:2px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.75);transition:transform .2s,background .35s}
+.pin:hover{transform:scale(1.22)}
+.pin.libre{background:var(--libre);box-shadow:0 0 14px rgba(34,197,94,.9);animation:pulso 1.8s infinite}
+.pin.ocupado{background:var(--lleno);color:#fff;box-shadow:0 0 12px rgba(239,68,68,.8)}
+.pin.sin{background:var(--medio);box-shadow:0 0 12px rgba(245,158,11,.8)}
+.pin.elegido{border:3px solid #38bdf8;transform:scale(1.25)}
+
+/* Etiquetas de orientación compactas */
+.ref-badge{
+  display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+  padding:4px 8px;border-radius:8px;font-size:.68rem;font-weight:700;
+  color:#f8fafc;background:rgba(15,23,42,.86);
+  border:1px solid rgba(148,163,184,.45);
+  box-shadow:0 3px 10px rgba(0,0,0,.6);
+}
+.ref-badge.acceso{background:rgba(14,116,144,.88);border-color:rgba(56,189,248,.7)}
+.ref-badge.edificio{background:rgba(49,46,129,.88);border-color:rgba(129,140,248,.7)}
+
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#0f172a;color:var(--txt);border:1px solid var(--line)}
+.popup-btn{margin-top:6px;cursor:pointer;background:rgba(56,189,248,.18);border:1px solid rgba(56,189,248,.5);
+  color:#bae6fd;padding:5px 8px;border-radius:6px;font-size:.74rem;font-weight:600;width:100%;
+  display:block;text-align:center;text-decoration:none}
+
+@keyframes pulso{
+  0%{box-shadow:0 0 0 0 rgba(34,197,94,.85)}
+  70%{box-shadow:0 0 0 12px rgba(34,197,94,0)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+}
+
+/* Registro colapsable */
+details.log-box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
+details.log-box summary{cursor:pointer;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;user-select:none}
+#registro{list-style:none;margin-top:10px;max-height:170px;overflow-y:auto}
+#registro li{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.08);font-size:.82rem}
+#registro .t{font-family:Consolas,monospace;color:var(--muted);font-size:.76rem}
+#registro .libre{color:#86efac}
+#registro .ocupado{color:#fca5a5}
+#registro .warn{color:#fde68a}
+#registro .info{color:#7dd3fc}
+
+@media (max-width:600px){
+  #mapa{height:440px}
+  .zonas-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+
+<body data-resumen="espera">
+<div class="glow espera"></div><div class="glow libres"></div><div class="glow medio"></div><div class="glow lleno"></div>
+
+<div class="wrap">
+  <!-- ENCABEZADO -->
+  <header>
+    <div class="brand">
+      <div class="logo">P</div>
+      <div>
+        <h1>Estacionamiento UAI · Sector Gimnasio</h1>
+        <p>5 pasillos de estudiantes · Vista satelital calibrada</p>
+      </div>
+    </div>
+    <div class="top-right">
+      <span class="pill" id="pillFb"><i></i><span>Conectando…</span></span>
+      <button type="button" class="btn" id="btnDemo">▶ Modo Demo</button>
+    </div>
+  </header>
+
+  <!-- RESUMEN GENERAL + SELECTOR DE DESTINO -->
+  <section class="card hero">
+    <div class="hero-left">
+      <small>Disponibilidad total (Pasillos 1 a 5)</small>
+      <div class="hero-num"><b id="resBig">—</b><span id="resTxt">espacios libres</span></div>
+      <div class="hero-sub" id="resEstado">Esperando sensores…</div>
+    </div>
+
+    <div class="destino-box">
+      <label for="selDestino">🎯 Elige dónde quieres estacionarte</label>
+      <div class="destino-row">
+        <select id="selDestino" class="destino-select">
+          <option value="">Selecciona un pasillo o espacio libre…</option>
+        </select>
+        <a href="#" target="_blank" rel="noopener" class="btn maps" id="btnMapsDestino">🧭 Ir en Google Maps</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 TARJETAS DE PASILLOS -->
+  <section class="zonas-grid" id="zonasGrid"></section>
+
+  <!-- MAPA SATELITAL REAL -->
+  <section class="card map-card">
+    <div class="map-head">
+      <h2>🛰️ Mapa Satelital · Estacionamiento Estudiantes UAI</h2>
+      <div class="map-legend">
+        <span><i style="background:var(--libre)"></i> Disponible (>50%)</span>
+        <span><i style="background:var(--medio)"></i> Congestión (1–50%)</span>
+        <span><i style="background:var(--lleno)"></i> Lleno (0%)</span>
+        <button type="button" class="btn" id="btnVerTodo" style="padding:4px 9px;font-size:.74rem">🅿️ Centrar</button>
+        <button type="button" class="btn" id="btnCalibrar" style="padding:4px 9px;font-size:.74rem">🛠 Calibrar GPS</button>
+      </div>
+    </div>
+    <div class="calibrar-bar" id="calibrarBar">
+      <b>Modo calibración GPS activo:</b> Haz clic en el mapa o <b>arrastra cualquier pin</b> al cajón exacto para ver sus coordenadas reales <code>[lat, lng]</code> y copiarlas en el código.
+    </div>
+    <div id="mapa"></div>
+  </section>
+
+  <!-- REGISTRO COLAPSABLE -->
+  <details class="log-box">
+    <summary>Registro de actividad</summary>
+    <ul id="registro"></ul>
+  </details>
+</div>
+
+<script>
+/* ===================================================================
+   1. CONFIGURACIÓN PRINCIPAL (5 PASILLOS CURVOS CALIBRADOS)
+   =================================================================== */
+const DATABASE_URL  = "https://estacionamiento-uai-default-rtdb.firebaseio.com";
+const SIN_SENAL_MS  = 10000;
+const CENTRO_MAPA   = [-33.48735, -70.51885];
+
+/* 5 Pasillos de estudiantes siguiendo la trayectoria real de las pistas */
+const ZONAS = [
+  {
+    id: "p1",
+    nombre: "Pasillo 1 · Exterior",
+    gps: [-33.48745, -70.51962],
+    sensores: ["sensor_1", "sensor_2", "sensor_3"],
+    poligono: [
+      [-33.48598, -70.51892], [-33.48604, -70.51880],
+      [-33.48668, -70.51926], [-33.48748, -70.51954],
+      [-33.48822, -70.51942], [-33.48862, -70.51910],
+      [-33.48868, -70.51922], [-33.48826, -70.51956],
+      [-33.48750, -70.51968], [-33.48662, -70.51940]
+    ]
+  },
+  {
+    id: "p2",
+    nombre: "Pasillo 2 · Buses / Oeste",
+    gps: [-33.48705, -70.51922],
+    sensores: ["sensor_4", "sensor_5", "sensor_6"],
+    poligono: [
+      [-33.48615, -70.51882], [-33.48621, -70.51870],
+      [-33.48695, -70.51910], [-33.48755, -70.51936],
+      [-33.48792, -70.51928], [-33.48798, -70.51940],
+      [-33.48758, -70.51950], [-33.48692, -70.51924]
+    ]
+  },
+  {
+    id: "p3",
+    nombre: "Pasillo 3 · Central",
+    gps: [-33.48725, -70.51895],
+    sensores: ["sensor_7", "sensor_8", "sensor_9"],
+    poligono: [
+      [-33.48645, -70.51866], [-33.48651, -70.51854],
+      [-33.48718, -70.51886], [-33.48775, -70.51914],
+      [-33.48855, -70.51890], [-33.48860, -70.51904],
+      [-33.48778, -70.51928], [-33.48715, -70.51900]
+    ]
+  },
+  {
+    id: "p4",
+    nombre: "Pasillo 4 · Este",
+    gps: [-33.48735, -70.51868],
+    sensores: ["sensor_10", "sensor_11", "sensor_12"],
+    poligono: [
+      [-33.48642, -70.51836], [-33.48648, -70.51824],
+      [-33.48725, -70.51858], [-33.48802, -70.51888],
+      [-33.48825, -70.51882], [-33.48830, -70.51896],
+      [-33.48805, -70.51902], [-33.48722, -70.51872]
+    ]
+  },
+  {
+    id: "p5",
+    nombre: "Pasillo 5 · Gimnasio",
+    gps: [-33.48735, -70.51838],
+    sensores: ["sensor_13", "sensor_14", "sensor_15"],
+    poligono: [
+      [-33.48655, -70.51808], [-33.48661, -70.51796],
+      [-33.48728, -70.51828], [-33.48808, -70.51856],
+      [-33.48814, -70.51868], [-33.48724, -70.51842]
+    ]
+  }
+];
+
+/* Puntos de referencia del campus */
+const REFERENCIAS = [
+  { nombre: "🏛️ Hacia Edificio A–F",            coords: [-33.48615, -70.51835], tipo: "edificio", desc: "Acceso peatonal superior hacia Edificios A y F" },
+  { nombre: "🚌 Parking Buses UAI",             coords: [-33.48695, -70.51916], tipo: "acceso",   desc: "Zona de buses UAI (mitad del Pasillo 2)" },
+  { nombre: "🏋️ Gimnasio – Canchas",            coords: [-33.48720, -70.51745], tipo: "edificio", desc: "Gimnasio principal y canchas deportivas" },
+  { nombre: "🚗 Entrada UAI (Diag. Las Torres)", coords: [-33.48875, -70.51935], tipo: "acceso",   desc: "Ingreso vehicular desde Av. Diagonal Las Torres" }
+];
+
+/* Coordenadas GPS [lat, lng] centradas en cada uno de los 5 pasillos */
+const COORDS_SENSORES = {
+  sensor_1:  [-33.48665, -70.51933],
+  sensor_2:  [-33.48748, -70.51961],
+  sensor_3:  [-33.48824, -70.51949],
+  sensor_4:  [-33.48655, -70.51895],
+  sensor_5:  [-33.48705, -70.51920],
+  sensor_6:  [-33.48758, -70.51943],
+  sensor_7:  [-33.48682, -70.51875],
+  sensor_8:  [-33.48745, -70.51905],
+  sensor_9:  [-33.48815, -70.51910],
+  sensor_10: [-33.48685, -70.51848],
+  sensor_11: [-33.48745, -70.51875],
+  sensor_12: [-33.48802, -70.51895],
+  sensor_13: [-33.48692, -70.51818],
+  sensor_14: [-33.48735, -70.51838],
+  sensor_15: [-33.48785, -70.51855]
+};
+
+/* ===================================================================
+   2. ESTADO GLOBAL Y MAPA SATELITAL REAL (ESRI WORLD IMAGERY)
+   =================================================================== */
+const $ = id => document.getElementById(id);
+const esNum = v => typeof v === "number" && isFinite(v);
+const urlGoogleMaps = (lat, lng) =>
+  `https://www.google.com/maps/dir/?api=1&destination=${lat.toFixed(6)},${lng.toFixed(6)}&travelmode=driving`;
+
+const sensores = new Map();
+const capasZonas = new Map();
+let modoDemo = false;
+let modoCalibrar = false;
+let destinoActual = { tipo: "campus", id: null, label: "UAI Peñalolén", coords: CENTRO_MAPA };
+
+const mapa = L.map("mapa", {
+  center: CENTRO_MAPA,
+  zoom: 18,
+  maxZoom: 20,
+  minZoom: 16
+});
+
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+  attribution: "Imágenes satelitales © Esri · UAI Peñalolén",
+  maxZoom: 20,
+  maxNativeZoom: 19
+}).addTo(mapa);
+
+// Dibujar polígonos de los 5 pasillos
+ZONAS.forEach(z => {
+  const poly = L.polygon(z.poligono, {
+    color: "#64748b",
+    fillColor: "#64748b",
+    fillOpacity: 0.24,
+    weight: 2
+  }).addTo(mapa);
+
+  poly.on("click", () => {
+    if (!modoCalibrar) seleccionarDestinoZona(z);
+  });
+  capasZonas.set(z.id, poly);
+});
+
+// Dibujar etiquetas de orientación
+REFERENCIAS.forEach(ref => {
+  const iconoRef = L.divIcon({
+    className: "",
+    html: `<div class="ref-badge ${ref.tipo}">${ref.nombre}</div>`,
+    iconSize: null,
+    iconAnchor: [60, 12]
+  });
+  L.marker(ref.coords, { icon: iconoRef, zIndexOffset: 200 })
+    .addTo(mapa)
+    .bindPopup(`<div style="font-family:var(--font)"><b>${ref.nombre}</b><br><span style="color:var(--muted);font-size:.8rem">${ref.desc}</span></div>`);
+});
+
+// Modo Calibración GPS
+mapa.on("click", e => {
+  if (!modoCalibrar) return;
+  const lat = e.latlng.lat.toFixed(6);
+  const lng = e.latlng.lng.toFixed(6);
+  $("calibrarBar").innerHTML = `Coordenada GPS exacta: <code>[${lat}, ${lng}]</code> · Cópiala en <code>COORDS_SENSORES</code> o <code>ZONAS</code>.`;
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(`<div style="font-family:var(--font)"><b>GPS Exacto</b><br><code>[${lat}, ${lng}]</code></div>`)
+    .openOn(mapa);
+});
+
+$("btnCalibrar").addEventListener("click", () => {
+  modoCalibrar = !modoCalibrar;
+  $("btnCalibrar").classList.toggle("activo", modoCalibrar);
+  $("calibrarBar").classList.toggle("on", modoCalibrar);
+
+  sensores.forEach(s => {
+    if (modoCalibrar) s.marker.dragging.enable();
+    else s.marker.dragging.disable();
+  });
+});
+
+/* ===================================================================
+   3. SELECCIÓN DE DESTINO PARA GOOGLE MAPS
+   =================================================================== */
+function actualizarBotonMaps() {
+  const btn = $("btnMapsDestino");
+  const [lat, lng] = destinoActual.coords;
+  btn.href = urlGoogleMaps(lat, lng);
+  btn.textContent = `🧭 Ir a ${destinoActual.label} (Maps)`;
+
+  sensores.forEach(s => {
+    const pin = document.getElementById(`pin_${s.key}`);
+    if (pin) pin.classList.toggle("elegido", destinoActual.tipo === "sensor" && destinoActual.id === s.key);
+  });
+
+  document.querySelectorAll(".zona-card").forEach(el => {
+    el.classList.toggle("seleccionada", destinoActual.tipo === "zona" && destinoActual.id === el.dataset.zonaId);
+  });
+}
+
+function seleccionarDestinoSensor(s) {
+  const pos = s.marker.getLatLng();
+  destinoActual = {
+    tipo: "sensor",
+    id: s.key,
+    label: `Espacio ${s.num}`,
+    coords: [pos.lat, pos.lng]
+  };
+  $("selDestino").value = `sensor:${s.key}`;
+  mapa.flyTo(pos, 19, { duration: 0.7 });
+  s.marker.openPopup();
+  actualizarBotonMaps();
+}
+
+function seleccionarDestinoZona(z) {
+  destinoActual = {
+    tipo: "zona",
+    id: z.id,
+    label: z.nombre.split("·")[0].trim(),
+    coords: z.gps
+  };
+  $("selDestino").value = `zona:${z.id}`;
+  const poly = capasZonas.get(z.id);
+  if (poly) mapa.fitBounds(poly.getBounds(), { padding: [35, 35] });
+  actualizarBotonMaps();
+}
+
+$("selDestino").addEventListener("change", e => {
+  const val = e.target.value;
+  if (!val) return;
+  const [tipo, id] = val.split(":");
+  if (tipo === "sensor" && sensores.has(id)) {
+    seleccionarDestinoSensor(sensores.get(id));
+  } else if (tipo === "zona") {
+    const z = ZONAS.find(item => item.id === id);
+    if (z) seleccionarDestinoZona(z);
+  }
+});
+
+$("btnVerTodo").addEventListener("click", () => mapa.flyTo(CENTRO_MAPA, 18, { duration: 0.7 }));
+
+/* ===================================================================
+   4. UTILIDADES, REGISTRO Y GESTIÓN DE SENSORES
+   =================================================================== */
+const hora = () => new Date().toLocaleTimeString("es-CL", { hour12: false });
+
+function registrar(tipo, texto) {
+  const ul = $("registro");
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="t">${hora()}</span><span class="${tipo}">${texto}</span>`;
+  ul.prepend(li);
+  while (ul.children.length > 40) ul.lastChild.remove();
+}
+
+function zonaDeSensor(key, zonaIdRemota) {
+  if (zonaIdRemota) {
+    const porId = ZONAS.find(z => z.id === zonaIdRemota);
+    if (porId) return porId;
+  }
+  return ZONAS.find(z => z.sensores.includes(key)) || ZONAS[0];
+}
+
+function obtenerOCrearSensor(key, num, zonaIdRemota) {
+  if (sensores.has(key)) return sensores.get(key);
+
+  const coords = COORDS_SENSORES[key] || [CENTRO_MAPA[0] - num * 0.00006, CENTRO_MAPA[1] - num * 0.00004];
+  const icono = L.divIcon({
+    className: "",
+    html: `<div class="pin" id="pin_${key}">${num}</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13]
+  });
+
+  const marker = L.marker(coords, { icon: icono, zIndexOffset: 500, draggable: modoCalibrar }).addTo(mapa);
+  const s = {
+    key, num, marker,
+    zona: zonaDeSensor(key, zonaIdRemota),
+    estado: null,
+    enLinea: true,
+    tieneLatido: false,
+    ultimoLatido: null,
+    tUltimoDato: Date.now()
+  };
+
+  marker.on("click", () => {
+    if (!modoCalibrar) seleccionarDestinoSensor(s);
+  });
+
+  marker.on("dragend", () => {
+    const p = marker.getLatLng();
+    $("calibrarBar").innerHTML = `Pin <b>${key}</b> movido a: <code>${key}: [${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}],</code>`;
+    actualizarPin(s);
+    if (destinoActual.tipo === "sensor" && destinoActual.id === key) {
+      destinoActual.coords = [p.lat, p.lng];
+      actualizarBotonMaps();
+    }
+  });
+
+  sensores.set(key, s);
+  actualizarPin(s);
+  return s;
+}
+
+function actualizarPin(s) {
+  const pin = document.getElementById(`pin_${s.key}`);
+  const clase = !s.enLinea ? "sin" : (s.estado === "LIBRE" ? "libre" : (s.estado === "OCUPADO" ? "ocupado" : ""));
+  const elegido = (destinoActual.tipo === "sensor" && destinoActual.id === s.key) ? " elegido" : "";
+  if (pin) pin.className = "pin " + clase + elegido;
+
+  const p = s.marker.getLatLng();
+  const estTxt = !s.enLinea ? "⚠ SIN SEÑAL" : (s.estado || "ESPERANDO");
+  const extraDemo = modoDemo
+    ? `<button class="popup-btn" onclick="alternarDemo('${s.key}')">Cambiar estado (Demo)</button>`
+    : "";
+
+  s.marker.setPopupContent(`
+    <div style="font-family:var(--font);min-width:160px">
+      <b style="font-size:.92rem">Espacio N°${s.num}</b><br>
+      <span style="color:var(--muted);font-size:.76rem">${s.zona.nombre}</span><br>
+      Estado: <b>${estTxt}</b>
+      <a href="${urlGoogleMaps(p.lat, p.lng)}" target="_blank" rel="noopener" class="popup-btn">🧭 Ir aquí en Google Maps</a>
+      ${extraDemo}
+    </div>
+  `);
+}
+
+function procesarDato(key, num, d) {
+  const s = obtenerOCrearSensor(key, num, d.zona);
+  const ahora = Date.now();
+  const est = String(d.estado || "").toUpperCase();
+
+  if (d.zona) s.zona = zonaDeSensor(key, d.zona);
+
+  if (esNum(d.latido)) {
+    s.tieneLatido = true;
+    if (d.latido !== s.ultimoLatido) { s.ultimoLatido = d.latido; s.tUltimoDato = ahora; }
+  } else {
+    s.tUltimoDato = ahora;
+  }
+  s.enLinea = true;
+
+  if ((est === "LIBRE" || est === "OCUPADO") && est !== s.estado) {
+    s.estado = est;
+    registrar(est === "LIBRE" ? "libre" : "ocupado", `Espacio ${s.num} (${s.zona.nombre}) → ${est}`);
+  }
+
+  actualizarPin(s);
+  actualizarUI();
+}
+
+/* ===================================================================
+   5. SEMÁFORO DE PASILLOS Y SELECTOR DE ESPACIOS LIBRES
+   =================================================================== */
+function calcularNivel(libres, activos) {
+  if (activos === 0) return { nivel: "espera", color: "#64748b", texto: "Sin datos" };
+  const pctLibre = libres / activos;
+  if (libres === 0)    return { nivel: "lleno", color: "#ef4444", texto: "Lleno" };
+  if (pctLibre <= 0.5) return { nivel: "medio", color: "#f59e0b", texto: "Congestión" };
+  return                      { nivel: "libre", color: "#22c55e", texto: "Disponible" };
+}
+
+function actualizarSelectorDestinos() {
+  const sel = $("selDestino");
+  const valorPrevio = sel.value;
+  sel.replaceChildren();
+
+  const libres = [...sensores.values()]
+    .filter(s => s.enLinea && s.estado === "LIBRE")
+    .sort((a, b) => a.num - b.num);
+
+  if (libres.length > 0) {
+    const grpLibres = document.createElement("optgroup");
+    grpLibres.label = `Espacios Libres (${libres.length})`;
+    libres.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = `sensor:${s.key}`;
+      opt.textContent = `🟢 Espacio N°${s.num} · ${s.zona.nombre}`;
+      grpLibres.appendChild(opt);
+    });
+    sel.appendChild(grpLibres);
+  }
+
+  const grpZonas = document.createElement("optgroup");
+  grpZonas.label = "Ir a un Pasillo";
+  ZONAS.forEach(z => {
+    const opt = document.createElement("option");
+    opt.value = `zona:${z.id}`;
+    opt.textContent = `🅿️ ${z.nombre}`;
+    grpZonas.appendChild(opt);
+  });
+  sel.appendChild(grpZonas);
+
+  if ([...sel.options].some(o => o.value === valorPrevio)) {
+    sel.value = valorPrevio;
+  } else if (libres.length > 0) {
+    const primero = libres[0];
+    const p = primero.marker.getLatLng();
+    sel.value = `sensor:${primero.key}`;
+    destinoActual = { tipo: "sensor", id: primero.key, label: `Espacio ${primero.num}`, coords: [p.lat, p.lng] };
+  } else {
+    destinoActual = { tipo: "campus", id: null, label: "UAI Peñalolén", coords: CENTRO_MAPA };
+  }
+  actualizarBotonMaps();
+}
+
+function actualizarUI() {
+  let totalLibres = 0, totalActivos = 0;
+  const grid = $("zonasGrid");
+  grid.replaceChildren();
+
+  ZONAS.forEach(z => {
+    let libres = 0, activos = 0;
+    sensores.forEach(s => {
+      if (s.zona.id === z.id && s.enLinea && (s.estado === "LIBRE" || s.estado === "OCUPADO")) {
+        activos++;
+        if (s.estado === "LIBRE") libres++;
+      }
+    });
+
+    totalLibres += libres;
+    totalActivos += activos;
+
+    const info = calcularNivel(libres, activos);
+    const poly = capasZonas.get(z.id);
+    if (poly) {
+      poly.setStyle({
+        color: info.color,
+        fillColor: info.color,
+        fillOpacity: activos === 0 ? 0.16 : 0.30
+      });
+    }
+
+    const card = document.createElement("div");
+    card.className = "zona-card";
+    card.dataset.nivel = info.nivel;
+    card.dataset.zonaId = z.id;
+    card.innerHTML = `
+      <div class="zona-top">
+        <div class="zona-info">
+          <b>${z.nombre}</b>
+          <span>${info.texto}</span>
+        </div>
+        <div class="zona-badge">
+          <strong>${activos ? `${libres}/${activos}` : "—"}</strong>
+          <small>libres</small>
+        </div>
+      </div>
+      <a href="${urlGoogleMaps(z.gps[0], z.gps[1])}" target="_blank" rel="noopener" class="zona-maps">🧭 Ir a este pasillo</a>
+    `;
+
+    card.querySelector(".zona-maps").addEventListener("click", e => e.stopPropagation());
+    card.addEventListener("click", () => seleccionarDestinoZona(z));
+    grid.appendChild(card);
+  });
+
+  const general = calcularNivel(totalLibres, totalActivos);
+  document.body.dataset.resumen = totalActivos === 0 ? "espera" : (general.nivel === "libre" ? "libres" : general.nivel);
+  $("resBig").textContent = totalActivos ? `${totalLibres} de ${totalActivos}` : "—";
+  $("resTxt").textContent = totalActivos === 1 ? "espacio libre" : "espacios libres";
+  $("resEstado").textContent = totalActivos === 0
+    ? "Esperando sensores…"
+    : (general.nivel === "lleno" ? "Estacionamiento lleno" : (general.nivel === "medio" ? "Pocos espacios disponibles" : "Alta disponibilidad"));
+
+  actualizarSelectorDestinos();
+}
+
+/* ===================================================================
+   6. MODO DEMO
+   =================================================================== */
+window.alternarDemo = function(key) {
+  const s = sensores.get(key);
+  if (!s) return;
+  procesarDato(s.key, s.num, { estado: s.estado === "LIBRE" ? "OCUPADO" : "LIBRE" });
+};
+
+$("btnDemo").addEventListener("click", () => {
+  modoDemo = !modoDemo;
+  $("btnDemo").classList.toggle("activo", modoDemo);
+  $("btnDemo").textContent = modoDemo ? "⏹ Salir Demo" : "▶ Modo Demo";
+
+  if (modoDemo) {
+    const estadosDemo = [
+      "LIBRE", "LIBRE", "LIBRE",
+      "LIBRE", "OCUPADO", "OCUPADO",
+      "OCUPADO", "OCUPADO", "OCUPADO",
+      "OCUPADO", "LIBRE", "OCUPADO",
+      "LIBRE", "LIBRE", "OCUPADO"
+    ];
+    estadosDemo.forEach((est, i) => procesarDato(`sensor_${i + 1}`, i + 1, { estado: est }));
+    registrar("info", "Modo Demo activado · Toca cualquier pin o usa el selector para elegir destino");
+  } else {
+    sensores.forEach(s => s.marker.remove());
+    sensores.clear();
+    actualizarUI();
+    registrar("info", "Modo Demo desactivado · Escuchando Firebase");
+  }
+});
+
+/* ===================================================================
+   7. CONEXIÓN FIREBASE Y VERIFICACIÓN DE SEÑAL
+   =================================================================== */
+try {
+  firebase.initializeApp({ databaseURL: DATABASE_URL });
+  const db = firebase.database();
+
+  db.ref(".info/connected").on("value", snap => {
+    const ok = snap.val() === true;
+    const pill = $("pillFb");
+    pill.className = "pill " + (ok ? "ok" : "bad");
+    pill.lastElementChild.textContent = ok ? "Firebase en línea" : "Sin conexión";
+  });
+
+  const alRecibir = snap => {
+    if (modoDemo) return;
+    const m = /^sensor_(\d+)$/.exec(snap.key);
+    if (!m) return;
+    const d = snap.val();
+    if (!d || typeof d !== "object") return;
+    procesarDato(snap.key, parseInt(m[1], 10), d);
+  };
+
+  const raiz = db.ref("/");
+  raiz.on("child_added", alRecibir, err => registrar("warn", "Error Firebase: " + err.message));
+  raiz.on("child_changed", alRecibir);
+  raiz.on("child_removed", snap => {
+    if (modoDemo) return;
+    const s = sensores.get(snap.key);
+    if (!s) return;
+    s.marker.remove();
+    sensores.delete(snap.key);
+    actualizarUI();
+  });
+} catch (e) {
+  $("pillFb").className = "pill warn";
+  $("pillFb").lastElementChild.textContent = "Sin Firebase";
+  registrar("warn", "Firebase no disponible · Puedes usar el Modo Demo");
+}
+
+setInterval(() => {
+  if (modoDemo) return;
+  const ahora = Date.now();
+  let cambio = false;
+  sensores.forEach(s => {
+    if (s.tieneLatido && s.enLinea && ahora - s.tUltimoDato > SIN_SENAL_MS) {
+      s.enLinea = false;
+      actualizarPin(s);
+      registrar("warn", `Espacio ${s.num} sin señal`);
+      cambio = true;
+    }
+  });
+  if (cambio) actualizarUI();
+}, 2000);
+
+actualizarUI();
+</script>
+</body>
+</html>
