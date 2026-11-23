@@ -1,98 +1,140 @@
-# Iteración 2 - Sistema Multi-Sensor
+# Iteración 2 - Primera Mejora Significativa
 
 ## Información General
 
-**Fecha:** xx/xx/2026
-**Versión:** v2.0
-**Estado:** Prototipo beta - Validación multi-sensor y UX web
+**Fecha:** 23/10/2026  
+**Versión:** v2.0  
+**Estado:** Prototipo funcional con maqueta física (Avance #2)  
 **Avance asociado:** Avance #2
 
 ---
 
 ## Descripción
 
-Segunda versión del prototipo del sistema de monitoreo para el estacionamiento de estudiantes de la Universidad Adolfo Ibáñez (sector bajo el Gimnasio / Edificios A–F). En esta iteración se escaló el sistema para operar con dos sensores simultáneos en tiempo real, se resolvió la detección de pérdida de señal.
+Segunda versión del prototipo presentada en el Avance #2 del curso. En esta etapa se mantuvo la operación con un solo sensor de distancia (50 cm de alcance) y la página web básica de la iteración anterior, incorporando un primer prototipo físico de cartón para validar las dimensiones y el concepto de lo que será el encapsulado en 3D.
 
-**Objetivo de esta iteración:**
-- Validar el funcionamiento simultáneo de dos placas (`sensor_1` y `sensor_2`) enviando datos en paralelo a Firebase.
-- Incorporar un sistema de latido (*heartbeat*) para detectar automáticamente sensores desconectados o sin WiFi.
+**Objetivos de esta iteración:**
+- Realizar la presentación del Avance #2 planificada en el curso.
+- Revalidar el funcionamiento del sensor y su alcance de 50 cm en pruebas en vivo.
+- Construir una maqueta de cartón que represente la forma y el calce del futuro modelo 3D.
+- Identificar mejoras críticas de conectividad, escalabilidad y visualización web para la versión final.
+
 ---
 
-## Componentes Utilizados
+## Cambios Respecto a v1
 
 ### Hardware
-- Microcontrolador: ESP32 DevKit v1 (x2 unidades con WiFi integrado)
-- Sensores:
-  - Sensor 1 (`/sensor_1`): Sensor de distancia láser ToF VL53L0X
-  - Sensor 2 (`/sensor_2`): Sensor de distancia láser ToF VL53L0X
+**Agregado:**
+- Ningún componente electrónico nuevo (se continuó trabajando con 1 placa ESP32 y 1 sensor VL53L0X).
 
-- Otros: Protoboards, cables jumper, alimentación USB / pruebas con batería externa.
+**Modificado:**
+- Montaje físico del circuito - Razón: adaptarlo dentro de la maqueta de cartón para simular su posición real en el estacionamiento.
+
+**Removido:**
+- Ninguno.
 
 ### Software
-- IDE: Arduino IDE y Visual Studio Code
-- Librerías y herramientas:
-  - Firmware: `WiFi.h`, librería de conexión a Firebase Realtime Database y librería del sensor VL53L0X
-  - Web: Firebase JS SDK v8.10.1, Leaflet 1.9.4, capa satelital Esri World Imagery y *Deep Links* a Google Maps
-- Versión código: v2.0
+**Nuevas funcionalidades:**
+- Se mantuvo la misma interfaz web básica de la Iteración 1, enfocada únicamente en mostrar el estado del sensor en tiempo real.
+
+**Optimizaciones:**
+- Validación continua del umbral de detección a 50 cm.
+
+**Bugs corregidos:**
+- Ninguno mayor en software; se priorizó la validación de la presentación y el prototipo físico.
+
+### Diseño Mecánico
+- Construcción de un **prototipo de cartón** a escala real para representar lo que será el encapsulado impreso en 3D.
+- Evaluación inicial de la abertura para el sensor láser y el espacio interno para la placa y cables.
 
 ---
 
-## Fotos del Prototipo
+## Fotos del Prototipo v2
 
 Incluir en esta carpeta:
-- `v2_dos_sensores.jpg`
-- `v2_mapa_satelital.png`
-- `v2_modo_demo_zonas.png`
-
+- `v2_prototipo_carton.jpg`
+- `v2_circuito_integrado.jpg`
+- `v2_presentacion_avance2.jpg`
+*Aclaración: No usamos una presentación como tal para exponer en esta evaluación dos.
 ---
 
 ## Resultados de Testing
 
 ### Funcionalidad Lograda
-✅ Operación simultánea y estable de 2 sensores (`sensor_1` y `sensor_2`) actualizando Firebase Realtime Database en tiempo real sin interferencias.
-✅ Detección automática de pérdida de señal tras 10 segundos sin recibir un nuevo `latido` desde la placa.
-❌ Pruebas prolongadas en exterior con encapsulado definitivo y alimentación solar/batería autónoma (pendiente para la siguiente iteración).
+✅ El sensor funciona correctamente y detecta cambios de estado (`LIBRE` / `OCUPADO`) dentro del rango de 50 cm.  
+✅ Presentación del Avance #2 completada según lo planificado en el curso.  
+✅ Validación física del volumen y geometría básica mediante el prototipo de cartón.  
+⚠️ Conexión WiFi inestable en determinados momentos durante las pruebas.  
+⚠️ Interfaz web aún demasiado básica para orientar a un conductor real.
 
-### Problemas Identificados
+### Feedback del Avance #2
 
-2. **Navegación fija a un solo punto en Google Maps:**
-   - Descripción: Al principio el botón de Google Maps redirigía únicamente al primer punto disponible sin dejar elegir al usuario.
-   - Causa probable: Lógica de redirección automática sin selector de preferencia.
-   - Solución propuesta: Se agregó un selector de destino y selección directa por clic en el mapa o en las tarjetas de pasillo, permitiendo que el estudiante elija el espacio o pasillo que prefiera y abra la ruta exacta en Google Maps.
+**Comentarios del profesor/ayudante:**
+1. Es necesario dar el salto de 1 sensor a múltiples sensores simultáneos y evolucionar la interfaz web para que sea útil en un estacionamiento real.
+   - Acción: Armar el segundo sensor y rediseñar la web evaluando nuevas formas de visualización espacial para la v3.
 
----
-
-## Aprendizajes
-
-### Técnicos
-- Usar una capa satelital real con coordenadas GPS (`lat, lng`) garantiza que el punto mostrado en la web coincida exactamente con el destino enviado a Google Maps, sin necesidad de pagar API Keys.
-- Agregar el campo `zona` en la estructura de datos de cada sensor permitirá escalar a cientos de dispositivos sin tener que listar manualmente cada uno en el código web.
-
-### De Diseño
-- Un modelo híbrido (**Zonas con semáforo + Pines individuales**) supera ampliamente a un mapa de solo puntos rojo/verde: evita saturar la pantalla cuando haya cientos de sensores y permite al conductor decidir hacia qué pasillo doblar en 2 segundos.
+2. Pasar de la maqueta de cartón a un encapsulado resistente y mejorar la estabilidad de la conexión.
+   - Acción: Modelar e imprimir la carcasa en 3D y agregar detección de pérdida de señal WiFi en la v3.
 
 ---
 
-## Plan para Iteración 3
+## Problemas Pendientes
 
-### Mejoras Planificadas
+1. **Inestabilidad en la conexión WiFi:**
+   - Descripción: En ciertos momentos la placa pierde conexión con la red WiFi, interrumpiendo la actualización de datos en tiempo real.
+   - Prioridad: Alta
+   - Plan para v3: Implementar reconexión automática en el firmware y un indicador de "Sin señal" en la web cuando el sensor deje de enviar latidos.
+
+2. **Interfaz web básica y falta de orientación espacial:**
+   - Descripción: La web actual sigue siendo igual de básica que en la Iteración 1 y no permite saber en qué lugar físico del campus se encuentra el espacio libre.
+   - Prioridad: Alta
+   - Plan para v3: Evaluar e implementar un nuevo diseño web (comparando dos modelos propuestos: un mapa simple de puntos rojo/verde vs. un mapa satelital completo por pasillos con semáforo y Google Maps).
+
+3. **Cómo vincular la ubicación física con la señal del sensor:**
+   - Descripción: Al proyectar el sistema a múltiples espacios, surge el desafío de definir la mejor forma de visualizar el funcionamiento de cada sensor: si basta con asociar su ubicación fija y, a partir de la señal recibida, mostrar dónde está y si se encuentra ocupado o libre.
+   - Prioridad: Alta
+   - Plan para v3: Definir una arquitectura de mapeo (coordenadas asociadas a cada ID de sensor) que permita escalar de 2 sensores a decenas sin saturar al usuario.
+
+---
+
+## Comparación v1 vs v2
+
+| Aspecto | v1 | v2 | Evolución |
+|---------|----|----|-----------|
+| Sensores activos | 1 | 1 | Igual (validación) |
+| Alcance de detección | 50 cm | 50 cm | Estable ✅ |
+| Estabilidad WiFi | Funcional | Con cortes intermitentes | Por mejorar ⚠️ |
+| Interfaz web | Básica | Básica (sin cambios) | Pendiente v3 |
+| Encapsulado | ❌ Sin carcasa | Prototipo de cartón | ✅ Primer avance físico |
+
+---
+
+## Plan para Iteración 3 (Versión Final)
+
+### Mejoras Críticas
 
 **Hardware:**
-- [ ] Implementar alimentación autónoma (batería recargable + optimización de consumo con *deep sleep*).
-- [ ] Realizar pruebas de campo en estacionamiento real bajo sol directo y distintas condiciones climáticas.
+- [ ] Armar e integrar el **segundo sensor** para operar ambos en simultáneo.
+- [ ] Mejorar la estabilidad de la conexión WiFi y probar alimentación autónoma.
 
 **Software:**
-- [ ] Guardar las coordenadas GPS y la zona de cada sensor directamente en Firebase para facilitar el despliegue masivo.
-- [ ] Incorporar filtrado temporal (histéresis) en el firmware para evitar falsos positivos causados por peatones.
+- [ ] Mejorar la página web evaluando los **dos modelos de interfaz** desarrollados:
+  - *Modelo A (Simple):* Mapa dentro de la web con puntos rojo/verde por sensor.
+  - *Modelo B (Completo):* Mapa satelital real del sector Gimnasio dividido en 5 pasillos con semáforo de congestión (verde, amarillo, rojo) y conexión directa a Google Maps.
+- [ ] Definir el método de visualización de sensores basado en su ubicación y señal de estado (saber dónde está ubicado cada sensor y si está libre u ocupado).
 
 **Diseño:**
-- [ ] Fabricar encapsulado definitivo en impresión 3D resistente a la intemperie.
-- [ ] Definir sistema de fijación física del módulo en el piso o tope de estacionamiento.
+- [ ] Pasar del prototipo de cartón al diseño 3D definitivo del encapsulado.
+- [ ] Mejorar el ruteo interno de cables y el sistema de montaje.
+
+**Testing:**
+- [ ] Validar el funcionamiento simultáneo de los 2 sensores en la nueva interfaz web.
+- [ ] Realizar pruebas con estudiantes para elegir la mejor experiencia de usuario.
 
 ---
 
 ## Archivos en esta Carpeta
 
-- `v2_codigo.ino` - Código multi-sensor del microcontrolador (con latido y umbral de 50 cm)
-- `index.html` - Interfaz web con mapa satelital, 5 pasillos, semáforo y Google Maps
-- `v2_fotos/` - Fotografías del montaje con dos sensores y capturas de la interfaz web
+- `v2_codigo.ino` - Código del microcontrolador utilizado en el Avance #2
+- `v2_web.html` - Interfaz web básica utilizada en la presentación
+- `v2_fotos/` - Fotografías del prototipo de cartón y pruebas de la presentación
