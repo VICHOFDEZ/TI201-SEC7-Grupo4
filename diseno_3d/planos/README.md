@@ -230,7 +230,7 @@ Exportar el dibujo en formato PDF.
 8. Archivos de entrega
 
 La documentación técnica contempla los siguientes archivos:
-plano_conjunto_v3.pdf: plano general del ensamblaje.
+Version 10_Todo plano.pdf: plano general del ensamblaje.
 Version_10_base_Fusion plano(1).pdf: plano de detalle de la base.
 Version_10_soporte_Fusion plano(1).pdf: plano de detalle del soporte.
 Version 10_cubierta plano 1.pdf: plano de detalle de la cubierta.
