@@ -1,8 +1,8 @@
-# Iteración 2 - Sistema Multi-Sensor y Mapa Satelital
+# Iteración 2 - Sistema Multi-Sensor
 
 ## Información General
 
-**Fecha:** 22/11/2026
+**Fecha:** xx/xx/2026
 **Versión:** v2.0
 **Estado:** Prototipo beta - Validación multi-sensor y UX web
 **Avance asociado:** Avance #2
@@ -11,14 +11,11 @@
 
 ## Descripción
 
-Segunda versión del prototipo del sistema de monitoreo para el estacionamiento de estudiantes de la Universidad Adolfo Ibáñez (sector bajo el Gimnasio / Edificios A–F). En esta iteración se escaló el sistema para operar con dos sensores simultáneos en tiempo real, se resolvió la detección de pérdida de señal y se rediseñó la interfaz web hacia un mapa satelital real dividido en 5 pasillos con semáforo de disponibilidad y navegación vía Google Maps.
+Segunda versión del prototipo del sistema de monitoreo para el estacionamiento de estudiantes de la Universidad Adolfo Ibáñez (sector bajo el Gimnasio / Edificios A–F). En esta iteración se escaló el sistema para operar con dos sensores simultáneos en tiempo real, se resolvió la detección de pérdida de señal.
 
 **Objetivo de esta iteración:**
 - Validar el funcionamiento simultáneo de dos placas (`sensor_1` y `sensor_2`) enviando datos en paralelo a Firebase.
 - Incorporar un sistema de latido (*heartbeat*) para detectar automáticamente sensores desconectados o sin WiFi.
-- Implementar una vista satelital real del estacionamiento de estudiantes (5 pasillos) con semáforo de congestión (verde, amarillo, rojo).
-- Integrar un selector de destino con enlaces directos a Google Maps para guiar al conductor hacia un pasillo o espacio libre específico.
-
 ---
 
 ## Componentes Utilizados
@@ -28,8 +25,7 @@ Segunda versión del prototipo del sistema de monitoreo para el estacionamiento 
 - Sensores:
   - Sensor 1 (`/sensor_1`): Sensor de distancia láser ToF VL53L0X
   - Sensor 2 (`/sensor_2`): Sensor de distancia láser ToF VL53L0X
-- Actuadores:
-  - Indicadores visuales en mapa satelital web (semáforo por pasillo y pines por espacio en tiempo real)
+
 - Otros: Protoboards, cables jumper, alimentación USB / pruebas con batería externa.
 
 ### Software
@@ -55,17 +51,9 @@ Incluir en esta carpeta:
 ### Funcionalidad Lograda
 ✅ Operación simultánea y estable de 2 sensores (`sensor_1` y `sensor_2`) actualizando Firebase Realtime Database en tiempo real sin interferencias.
 ✅ Detección automática de pérdida de señal tras 10 segundos sin recibir un nuevo `latido` desde la placa.
-✅ Mapa satelital real calibrado sobre los 5 pasillos de estudiantes (excluyendo el sector superior de profesores y funcionarios) con referencias del campus (*Hacia Edificio A–F*, *Parking Buses UAI*, *Gimnasio – Canchas* y *Entrada UAI*).
-✅ Semáforo automático por pasillo (Disponible >50%, Congestión 1–50%, Lleno 0%) + selector de destino conectado a Google Maps.
-✅ Herramientas integradas de **Modo Demo** (para simular los 5 pasillos llenos de sensores) y **Calibrar GPS** (arrastrando pines sobre el satélite).
 ❌ Pruebas prolongadas en exterior con encapsulado definitivo y alimentación solar/batería autónoma (pendiente para la siguiente iteración).
 
 ### Problemas Identificados
-
-1. **Desalineación inicial de pasillos y zona de profesores:**
-   - Descripción: En las primeras pruebas del mapa, los polígonos de los pasillos quedaron desplazados hacia el este y cubrían parte del estacionamiento exclusivo de profesores y funcionarios.
-   - Causa probable: Coordenadas GPS estimadas en línea recta sin seguir la curvatura real del terreno.
-   - Solución propuesta: Se trazaron 5 polígonos curvos alineados exactamente con el asfalto de los pasillos de estudiantes y se añadió el modo **Calibrar GPS** para ajustar pines con precisión.
 
 2. **Navegación fija a un solo punto en Google Maps:**
    - Descripción: Al principio el botón de Google Maps redirigía únicamente al primer punto disponible sin dejar elegir al usuario.
