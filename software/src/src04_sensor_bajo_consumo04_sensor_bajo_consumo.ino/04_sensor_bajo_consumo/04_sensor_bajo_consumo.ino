@@ -18,7 +18,15 @@
  *
  *  IMPORTANTE (cableado del Deep Sleep):
  *  Para que la placa pueda despertarse sola, hay que unir con un cable
- *  el pin D0 (GPIO16) con el pin RST.
+ *  el pin D0 (GPIO16) con el pin RST. Es un cable directo, NO necesita
+ *  resistencia.
+ *    1) DESCONECTA el cable D0-RST.
+ *    2) Sube (carga) el programa a la placa.
+ *    3) Cuando diga "Done uploading", CONECTA el cable D0-RST.
+ *    4) Aprieta el botón RST una vez (o desenchufa y enchufa el USB).
+ *  Si la placa se quedó dormida sin despertar, es porque el cable no
+ *  estaba puesto: conéctalo y aprieta RST.
+ *  Cada vez que quieras volver a subir código, primero QUITA el cable.
  *
  *  Conexión del sensor VL53L0X a la placa:
  *     VIN -> 3V3
@@ -123,9 +131,19 @@ void setup() {
   if (cambiar_estado) {
     Serial.println("Cambio detectado. Conectando WiFi y enviando a Firebase...");
 
-    // Conectar al WiFi (espera hasta lograrlo)
+    // Conectar al WiFi (máximo 15 s, para no gastar la batería si no hay red)
+    WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    while (WiFi.status() != WL_CONNECTED) { delay(100); }
+    unsigned long inicio = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - inicio < 15000) { delay(100); }
+
+    if (WiFi.status() != WL_CONNECTED) {
+      // No se pudo conectar: deshacemos el cambio para reintentarlo en el próximo despertar
+      Serial.println("No hubo WiFi. Se reintentará al despertar.");
+      datosRTC.estado_actual = (datosRTC.estado_actual == 1) ? 0 : 1;
+      ESP.rtcUserMemoryWrite(0, (uint32_t*) &datosRTC, sizeof(datosRTC));
+      ESP.deepSleep(2e6);
+    }
 
     // Conectar a Firebase
     config.host = FIREBASE_HOST;
