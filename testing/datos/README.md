@@ -51,7 +51,7 @@ timestamp, distancia_mm, estado, evento
 
 ---
 
-### `comparativa_versiones.xlsx` — ⚠️ PENDIENTE DE SUBIR (datos incluidos en la tabla de abajo)
+### `comparativa_versiones.xlsx` 
 Comparación de métricas técnicas entre las iteraciones del software (v1 Básico, v2 Avanzado, v3 Deep Sleep).
 
 | Métrica | v1 (Básico) | v2 (Avanzado) | v3 (Deep Sleep) | Mejora Final |
@@ -94,5 +94,3 @@ Comparación de métricas técnicas entre las iteraciones del software (v1 Bási
 Si necesitas visualizar gráficamente los datos, exporta los gráficos desde `datos_cuantitativos.xlsx` en formato PNG y guárdalos en esta carpeta con los siguientes nombres:
 
 - `grafico_usabilidad.png` ✅ (Barras con resultados de la escala Likert)
-- `grafico_latencia.png` — ⚠️ pendiente (Dispersión con tiempos de respuesta del sensor a Firebase)
-- `grafico_consumo_energia.png` — ⚠️ pendiente (Comparativa v1 vs v3)
