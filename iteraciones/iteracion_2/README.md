@@ -1,153 +1,110 @@
-# Iteración 2 - Primera Mejora Significativa
+# Iteración 2 - Sistema Multi-Sensor y Mapa Satelital
 
 ## Información General
 
-**Fecha:** [XX/XX/2025]  
-**Versión:** v2.0  
-**Estado:** Prototipo funcional mejorado  
+**Fecha:** 22/11/2026
+**Versión:** v2.0
+**Estado:** Prototipo beta - Validación multi-sensor y UX web
 **Avance asociado:** Avance #2
 
 ---
 
 ## Descripción
 
-Segunda versión del prototipo, incorporando feedback de la iteración 1 y del Avance #1. Incluye mejoras significativas en funcionalidad y primeros pasos en diseño de encapsulado.
+Segunda versión del prototipo del sistema de monitoreo para el estacionamiento de estudiantes de la Universidad Adolfo Ibáñez (sector bajo el Gimnasio / Edificios A–F). En esta iteración se escaló el sistema para operar con dos sensores simultáneos en tiempo real, se resolvió la detección de pérdida de señal y se rediseñó la interfaz web hacia un mapa satelital real dividido en 5 pasillos con semáforo de disponibilidad y navegación vía Google Maps.
 
-**Objetivos de esta iteración:**
-- Corregir problemas identificados en v1
-- Agregar funcionalidades adicionales
-- Iniciar diseño 3D del encapsulado
-- Realizar primeras pruebas con usuarios
+**Objetivo de esta iteración:**
+- Validar el funcionamiento simultáneo de dos placas (`sensor_1` y `sensor_2`) enviando datos en paralelo a Firebase.
+- Incorporar un sistema de latido (*heartbeat*) para detectar automáticamente sensores desconectados o sin WiFi.
+- Implementar una vista satelital real del estacionamiento de estudiantes (5 pasillos) con semáforo de congestión (verde, amarillo, rojo).
+- Integrar un selector de destino con enlaces directos a Google Maps para guiar al conductor hacia un pasillo o espacio libre específico.
 
 ---
 
-## Cambios Respecto a v1
+## Componentes Utilizados
 
 ### Hardware
-**Agregado:**
-- [Componente nuevo 1]
-- [Componente nuevo 2]
-
-**Modificado:**
-- [Cambio 1] - Razón: [Justificación]
-- [Cambio 2] - Razón: [Justificación]
-
-**Removido:**
-- [Componente removido] - Razón: [Justificación]
+- Microcontrolador: ESP32 DevKit v1 (x2 unidades con WiFi integrado)
+- Sensores:
+  - Sensor 1 (`/sensor_1`): Sensor de distancia láser ToF VL53L0X
+  - Sensor 2 (`/sensor_2`): Sensor de distancia láser ToF VL53L0X
+- Actuadores:
+  - Indicadores visuales en mapa satelital web (semáforo por pasillo y pines por espacio en tiempo real)
+- Otros: Protoboards, cables jumper, alimentación USB / pruebas con batería externa.
 
 ### Software
-**Nuevas funcionalidades:**
-- [Feature 1]
-- [Feature 2]
-
-**Optimizaciones:**
-- [Optimización 1]
-- [Optimización 2]
-
-**Bugs corregidos:**
-- [Bug 1 de v1]
-- [Bug 2 de v1]
-
-### Diseño Mecánico
-- Primer diseño de encapsulado en Fusion 360
-- Prototipo impreso en 3D
-- Integración de componentes en carcasa
+- IDE: Arduino IDE y Visual Studio Code
+- Librerías y herramientas:
+  - Firmware: `WiFi.h`, librería de conexión a Firebase Realtime Database y librería del sensor VL53L0X
+  - Web: Firebase JS SDK v8.10.1, Leaflet 1.9.4, capa satelital Esri World Imagery y *Deep Links* a Google Maps
+- Versión código: v2.0
 
 ---
 
-## Fotos del Prototipo v2
+## Fotos del Prototipo
 
 Incluir en esta carpeta:
-- `v2_prototipo_completo.jpg`
-- `v2_circuito_integrado.jpg`
-- `v2_encapsulado_inicial.jpg`
-- `v2_testing_usuario.jpg`
+- `v2_dos_sensores.jpg`
+- `v2_mapa_satelital.png`
+- `v2_modo_demo_zonas.png`
 
 ---
 
 ## Resultados de Testing
 
 ### Funcionalidad Lograda
-✅ [Función 1]  
-✅ [Función 2]  
-✅ [Función 3]  
-⚠️ [Función 4 - parcial]
+✅ Operación simultánea y estable de 2 sensores (`sensor_1` y `sensor_2`) actualizando Firebase Realtime Database en tiempo real sin interferencias.
+✅ Detección automática de pérdida de señal tras 10 segundos sin recibir un nuevo `latido` desde la placa.
+✅ Mapa satelital real calibrado sobre los 5 pasillos de estudiantes (excluyendo el sector superior de profesores y funcionarios) con referencias del campus (*Hacia Edificio A–F*, *Parking Buses UAI*, *Gimnasio – Canchas* y *Entrada UAI*).
+✅ Semáforo automático por pasillo (Disponible >50%, Congestión 1–50%, Lleno 0%) + selector de destino conectado a Google Maps.
+✅ Herramientas integradas de **Modo Demo** (para simular los 5 pasillos llenos de sensores) y **Calibrar GPS** (arrastrando pines sobre el satélite).
+❌ Pruebas prolongadas en exterior con encapsulado definitivo y alimentación solar/batería autónoma (pendiente para la siguiente iteración).
 
-### Feedback del Avance #2
+### Problemas Identificados
 
-**Comentarios del profesor/ayudante:**
-1. [Comentario 1]
-   - Acción: [Plan de mejora para v3]
+1. **Desalineación inicial de pasillos y zona de profesores:**
+   - Descripción: En las primeras pruebas del mapa, los polígonos de los pasillos quedaron desplazados hacia el este y cubrían parte del estacionamiento exclusivo de profesores y funcionarios.
+   - Causa probable: Coordenadas GPS estimadas en línea recta sin seguir la curvatura real del terreno.
+   - Solución propuesta: Se trazaron 5 polígonos curvos alineados exactamente con el asfalto de los pasillos de estudiantes y se añadió el modo **Calibrar GPS** para ajustar pines con precisión.
 
-2. [Comentario 2]
-   - Acción: [Plan de mejora para v3]
-
-### Testing con Usuarios (2-3 personas)
-
-**Resultados cuantitativos:**
-- Facilidad de uso promedio: [X/5]
-- Satisfacción promedio: [X/5]
-
-**Feedback cualitativo:**
-- Positivo: [Comentarios]
-- A mejorar: [Comentarios]
+2. **Navegación fija a un solo punto en Google Maps:**
+   - Descripción: Al principio el botón de Google Maps redirigía únicamente al primer punto disponible sin dejar elegir al usuario.
+   - Causa probable: Lógica de redirección automática sin selector de preferencia.
+   - Solución propuesta: Se agregó un selector de destino y selección directa por clic en el mapa o en las tarjetas de pasillo, permitiendo que el estudiante elija el espacio o pasillo que prefiera y abra la ruta exacta en Google Maps.
 
 ---
 
-## Problemas Pendientes
+## Aprendizajes
 
-1. **Problema 1:**
-   - Descripción: [Detalles]
-   - Prioridad: Alta/Media/Baja
-   - Plan para v3: [Solución propuesta]
+### Técnicos
+- Usar una capa satelital real con coordenadas GPS (`lat, lng`) garantiza que el punto mostrado en la web coincida exactamente con el destino enviado a Google Maps, sin necesidad de pagar API Keys.
+- Agregar el campo `zona` en la estructura de datos de cada sensor permitirá escalar a cientos de dispositivos sin tener que listar manualmente cada uno en el código web.
 
-2. **Problema 2:**
-   - Descripción: [Detalles]
-   - Prioridad: Alta/Media/Baja
-   - Plan para v3: [Solución propuesta]
+### De Diseño
+- Un modelo híbrido (**Zonas con semáforo + Pines individuales**) supera ampliamente a un mapa de solo puntos rojo/verde: evita saturar la pantalla cuando haya cientos de sensores y permite al conductor decidir hacia qué pasillo doblar en 2 segundos.
 
 ---
 
-## Comparación v1 vs v2
+## Plan para Iteración 3
 
-| Aspecto | v1 | v2 | Mejora |
-|---------|----|----|--------|
-| Sensores funcionales | 2/3 | 3/3 | ✅ |
-| Tiempo de respuesta | 500ms | 200ms | ↓60% |
-| Consumo energético | 250mA | 180mA | ↓28% |
-| Encapsulado | ❌ | Prototipo | ✅ |
-| Usuarios testeados | 0 | 2 | ✅ |
-
----
-
-## Plan para Iteración 3 (Versión Final)
-
-### Mejoras Críticas
+### Mejoras Planificadas
 
 **Hardware:**
-- [ ] [Mejora crítica 1]
-- [ ] [Mejora crítica 2]
+- [ ] Implementar alimentación autónoma (batería recargable + optimización de consumo con *deep sleep*).
+- [ ] Realizar pruebas de campo en estacionamiento real bajo sol directo y distintas condiciones climáticas.
 
 **Software:**
-- [ ] [Optimización 1]
-- [ ] [Feature faltante]
+- [ ] Guardar las coordenadas GPS y la zona de cada sensor directamente en Firebase para facilitar el despliegue masivo.
+- [ ] Incorporar filtrado temporal (histéresis) en el firmware para evitar falsos positivos causados por peatones.
 
 **Diseño:**
-- [ ] Refinar encapsulado
-- [ ] Mejorar accesibilidad
-- [ ] Finalizar sistema de montaje
-
-**Testing:**
-- [ ] Testear con 5+ usuarios
-- [ ] Validar métricas ODS
-- [ ] Instalación en contexto real
+- [ ] Fabricar encapsulado definitivo en impresión 3D resistente a la intemperie.
+- [ ] Definir sistema de fijación física del módulo en el piso o tope de estacionamiento.
 
 ---
 
 ## Archivos en esta Carpeta
 
-- `v2_codigo.ino` - Código de esta versión
-- `v2_esquema.png` - Esquema del circuito actualizado
-- `v2_modelo3d.f3d` - Primer diseño en Fusion 360
-- `v2_fotos/` - Fotografías del prototipo
-- `v2_feedback.pdf` - Compilación de comentarios recibidos
+- `v2_codigo.ino` - Código multi-sensor del microcontrolador (con latido y umbral de 50 cm)
+- `index.html` - Interfaz web con mapa satelital, 5 pasillos, semáforo y Google Maps
+- `v2_fotos/` - Fotografías del montaje con dos sensores y capturas de la interfaz web
