@@ -45,14 +45,14 @@ Este documento declara todo el material externo utilizado en el proyecto: librer
 |---|---|
 | Fotos en `hardware/fotos/`, `iteraciones/*/v*_fotos/`, `testing/evidencias/` | Tomadas por el equipo |
 | Renders y planos en `diseño-3d/` | Generados por el equipo en Fusion 360 |
-| `firmware/web/estacionamiento_base.jpg` | **[COMPLETAR: indicar origen de la imagen aérea]** |
-| `hardware/esquemas/circuito_completo.jpeg` | **[COMPLETAR: indicar cómo se generó el diagrama]** |
+| `firmware/web/estacionamiento_base.jpg` | 
+| `hardware/esquemas/circuito_completo.jpeg` | 
 
 ## 6. Uso de Inteligencia Artificial
 
 | Herramienta | Para qué se usó | Archivos afectados |
 |---|---|---|
 | Claude (Anthropic) | Revisión y reorganización de la estructura del repositorio, corrección de nombres de archivos y actualización de los README (noviembre 2026) | READMEs, `FUENTES.md` |
-| **[COMPLETAR]** | **[Ej.: apoyo en la escritura/comentarios del código .ino, páginas web, textos de documentación]** | **[COMPLETAR]** |
+ | **[Ej.: apoyo en la escritura/comentarios del código .ino, páginas web, textos de documentación]** |
 
 > Todo el contenido generado o asistido por IA fue revisado y validado por los integrantes del equipo.

@@ -16,19 +16,6 @@ Slides de la presentación final
 
 ---
 
-## Documentos Principales
-
-### 1. Reporte Final del Proyecto
-`reporte_final/reporte_final_v3.pdf` — ⚠️ PENDIENTE DE SUBIR
-
-Máximo 15 páginas, formato profesional
-
-### 2. Presentación Final
-`presentacion/presentacion_avance3.pdf` o `.pptx` — ⚠️ PENDIENTE DE SUBIR
-
-Duración: 10 minutos de presentación
-
----
 
 ## Checklist de Entrega
 

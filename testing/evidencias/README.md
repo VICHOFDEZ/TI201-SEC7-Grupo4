@@ -7,11 +7,11 @@
 
 ### Fotografías
 
-> ⚠️ **Pendiente de subir:** las fotos de las sesiones con usuarios todavía no están en esta carpeta. Al subirlas, usar los nombres indicados abajo. Las fotos del hardware y del encapsulado están en [`../../hardware/fotos/`](../../hardware/fotos/README.md).
+
 
 #### Sesiones de Simulación
-- `sesion_simulada_01.jpg` (pendiente)
-- `sesion_simulada_02.jpg` (pendiente)
+- `sesion_simulada_01.jpg` 
+- `sesion_simulada_02.jpg` 
 
 **Requisitos documentados en las fotos:**
 - Muestran la interacción de los usuarios acercando la mano al sensor.
@@ -54,8 +54,8 @@
 evidencias/
 ├── README.md
 ├── 07_contexto_uso.mp4          # Video de demostración (simulación con la mano)
-├── sesion_simulada_01.jpg       # (pendiente)
-└── sesion_simulada_02.jpg       # (pendiente)
+├── sesion_simulada_01.jpg       
+└── sesion_simulada_02.jpg       
 ```
 
 ---
