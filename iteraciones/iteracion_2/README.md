@@ -112,7 +112,7 @@ En la carpeta `v2_fotos/`:
 
 ## Plan para Iteración 3 (Versión Final)
 
-### Mejoras Críticas
+*Mejoras urgentes:
 
 **Hardware:**
 - [ ] Armar e integrar el **segundo sensor** para operar ambos en simultáneo.
